@@ -1,0 +1,185 @@
+import { useEffect, useRef } from 'react'
+import {
+  CandlestickSeries,
+  ColorType,
+  createChart,
+  createSeriesMarkers,
+  HistogramSeries,
+  LineSeries,
+  type IChartApi,
+  type ISeriesApi,
+  type SeriesMarker,
+  type Time,
+} from 'lightweight-charts'
+import { computeRsi, detectSupportResistance } from '../lib/indicators'
+import type { Candle, IndicatorToggles } from '../types'
+
+type Props = {
+  candles: Candle[]
+  toggles: IndicatorToggles
+  chartType: 'candle' | 'line'
+}
+
+export function TradingChart({ candles, toggles, chartType }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const chartRef = useRef<IChartApi | null>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const chart = createChart(containerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#8b93a7',
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(139, 147, 167, 0.08)' },
+        horzLines: { color: 'rgba(139, 147, 167, 0.08)' },
+      },
+      crosshair: {
+        vertLine: { color: 'rgba(232, 184, 74, 0.35)', width: 1, style: 2 },
+        horzLine: { color: 'rgba(232, 184, 74, 0.35)', width: 1, style: 2 },
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(139, 147, 167, 0.15)',
+        scaleMargins: { top: 0.08, bottom: toggles.volume || toggles.rsi ? 0.28 : 0.08 },
+      },
+      timeScale: {
+        borderColor: 'rgba(139, 147, 167, 0.15)',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      autoSize: true,
+    })
+
+    chartRef.current = chart
+
+    let candleSeries: ISeriesApi<'Candlestick'> | null = null
+    let lineSeries: ISeriesApi<'Line'> | null = null
+    let volumeSeries: ISeriesApi<'Histogram'> | null = null
+    let rsiSeries: ISeriesApi<'Line'> | null = null
+
+    if (chartType === 'candle') {
+      candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: '#3dcf8e',
+        downColor: '#f07178',
+        borderUpColor: '#3dcf8e',
+        borderDownColor: '#f07178',
+        wickUpColor: '#3dcf8e',
+        wickDownColor: '#f07178',
+      })
+      candleSeries.setData(
+        candles.map((c) => ({
+          time: c.time as Time,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        })),
+      )
+    } else {
+      lineSeries = chart.addSeries(LineSeries, {
+        color: '#e8b84a',
+        lineWidth: 2,
+        priceLineVisible: false,
+      })
+      lineSeries.setData(
+        candles.map((c) => ({ time: c.time as Time, value: c.close })),
+      )
+    }
+
+    const primary = candleSeries ?? lineSeries
+
+    if (toggles.volume) {
+      volumeSeries = chart.addSeries(HistogramSeries, {
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'volume',
+      })
+      chart.priceScale('volume').applyOptions({
+        scaleMargins: { top: 0.78, bottom: 0 },
+      })
+      volumeSeries.setData(
+        candles.map((c) => ({
+          time: c.time as Time,
+          value: c.volume,
+          color:
+            c.close >= c.open
+              ? 'rgba(61, 207, 142, 0.35)'
+              : 'rgba(240, 113, 120, 0.35)',
+        })),
+      )
+    }
+
+    if (toggles.rsi) {
+      rsiSeries = chart.addSeries(LineSeries, {
+        color: '#7eb8ff',
+        lineWidth: 1,
+        priceScaleId: 'rsi',
+        priceLineVisible: false,
+        lastValueVisible: true,
+      })
+      chart.priceScale('rsi').applyOptions({
+        scaleMargins: { top: 0.82, bottom: toggles.volume ? 0.12 : 0 },
+      })
+      const rsi = computeRsi(candles.map((c) => c.close))
+      rsiSeries.setData(
+        candles
+          .map((c, i) =>
+            rsi[i] == null
+              ? null
+              : { time: c.time as Time, value: rsi[i]! },
+          )
+          .filter((d): d is { time: Time; value: number } => d != null),
+      )
+    }
+
+    if (toggles.supportResistance && primary) {
+      const levels = detectSupportResistance(candles)
+      for (const level of levels) {
+        primary.createPriceLine({
+          price: level.price,
+          color: level.kind === 'support' ? '#3dcf8e' : '#f07178',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: level.kind === 'support' ? 'S' : 'R',
+        })
+      }
+
+      // Markers at nearest swing candles for the top levels
+      const markers: SeriesMarker<Time>[] = []
+      for (const level of levels.slice(0, 3)) {
+        let bestIdx = 0
+        let bestDist = Infinity
+        for (let i = 0; i < candles.length; i++) {
+          const ref = level.kind === 'support' ? candles[i]!.low : candles[i]!.high
+          const dist = Math.abs(ref - level.price)
+          if (dist < bestDist) {
+            bestDist = dist
+            bestIdx = i
+          }
+        }
+        markers.push({
+          time: candles[bestIdx]!.time as Time,
+          position: level.kind === 'support' ? 'belowBar' : 'aboveBar',
+          color: level.kind === 'support' ? '#3dcf8e' : '#f07178',
+          shape: level.kind === 'support' ? 'arrowUp' : 'arrowDown',
+          text: level.kind === 'support' ? 'Support' : 'Resist',
+        })
+      }
+      markers.sort((a, b) => Number(a.time) - Number(b.time))
+      createSeriesMarkers(primary, markers)
+    }
+
+    chart.timeScale().fitContent()
+
+    return () => {
+      chart.remove()
+      chartRef.current = null
+    }
+  }, [candles, toggles, chartType])
+
+  return <div className="chart-canvas" ref={containerRef} role="img" aria-label="BTC price chart" />
+}
