@@ -56,3 +56,61 @@ export type IndicatorToggles = {
   volume: boolean
   supportResistance: boolean
 }
+
+export type FiveMinuteSide = 'Up' | 'Down'
+export type FiveMinuteSource = 'polymarket' | 'simulated'
+
+export type FiveMinuteMarketSnapshot = {
+  windowStart: number
+  windowEnd: number
+  slug: string
+  title: string
+  question: string
+  upPrice: number
+  downPrice: number
+  closed: boolean
+  acceptingOrders: boolean
+  volume: number | null
+  tokenUp: string | null
+  tokenDown: string | null
+  resolvedOutcome: FiveMinuteSide | null
+  priceToBeat: number | null
+  finalPrice: number | null
+  source: FiveMinuteSource
+  liveOdds: boolean
+}
+
+export type FiveMinuteBet = {
+  id: string
+  windowStart: number
+  side: FiveMinuteSide
+  shares: number
+  price: number
+  cost: number
+  timestamp: number
+  source: FiveMinuteSource
+}
+
+export type FiveMinuteWindowRecord = {
+  windowStart: number
+  windowEnd: number
+  slug: string
+  openPrice: number | null
+  closePrice: number | null
+  outcome: FiveMinuteSide | null
+  source: FiveMinuteSource
+  bets: FiveMinuteBet[]
+  payout: number
+  cost: number
+  pnl: number
+  settledAt: number | null
+}
+
+export type FiveMinuteBook = {
+  cash: number
+  startingCash: number
+  openBets: FiveMinuteBet[]
+  history: FiveMinuteWindowRecord[]
+  /** Spot open prices captured for each window (for Coinbase settlement fallback). */
+  openPrices: Record<string, number>
+}

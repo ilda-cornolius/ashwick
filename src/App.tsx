@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiveMinuteMarket } from './components/FiveMinuteMarket'
 import { IndicatorBar } from './components/IndicatorBar'
 import { OrderTicket } from './components/OrderTicket'
 import { PolymarketPanel } from './components/PolymarketPanel'
@@ -6,6 +7,7 @@ import { PortfolioSummary } from './components/PortfolioSummary'
 import { TradeHistory } from './components/TradeHistory'
 import { TradingChart } from './components/TradingChart'
 import { VolumeTracker } from './components/VolumeTracker'
+import { useFiveMinuteMarket } from './hooks/useFiveMinuteMarket'
 import { useMarketData } from './hooks/useMarketData'
 import { usePortfolio } from './hooks/usePortfolio'
 import { formatUsd } from './lib/format'
@@ -23,6 +25,7 @@ export default function App() {
 
   const market = useMarketData(interval)
   const { portfolio, placeOrder, reset, flash, error, clearError } = usePortfolio()
+  const fiveMin = useFiveMinuteMarket(market.spotPrice)
 
   const change24h =
     market.candles.length >= 25
@@ -71,15 +74,18 @@ export default function App() {
           </h1>
           <p>
             ASHWICK is a paper desk for BTC: live spot charts from Coinbase,
-            Polymarket prediction odds for sentiment, RSI and support levels,
-            and a full virtual portfolio that survives refresh.
+            Polymarket prediction odds, 5-minute Up/Down practice windows,
+            RSI and support levels, and a virtual portfolio that survives refresh.
           </p>
           <div className="feed-legend">
             <span>
               <i className="dot spot" /> Spot chart · Coinbase Exchange
             </span>
             <span>
-              <i className="dot pm" /> Odds · Polymarket Gamma
+              <i className="dot pm" /> Odds · Polymarket Gamma / CLOB
+            </span>
+            <span>
+              <i className="dot five" /> 5m Up/Down · paper practice
             </span>
           </div>
         </section>
@@ -145,6 +151,20 @@ export default function App() {
         </aside>
       </main>
 
+      <section className="five-min-stage">
+        <FiveMinuteMarket
+          market={fiveMin.market}
+          book={fiveMin.book}
+          secondsLeft={fiveMin.secondsLeft}
+          exposure={fiveMin.exposure}
+          onBuy={fiveMin.buy}
+          onReset={fiveMin.reset}
+          flash={fiveMin.flash}
+          error={fiveMin.error}
+          onClearError={fiveMin.clearError}
+        />
+      </section>
+
       <section className="desk-grid">
         <PortfolioSummary
           portfolio={portfolio}
@@ -166,9 +186,10 @@ export default function App() {
       <footer className="site-foot">
         <p>
           ASHWICK is a simulation. Spot candles &amp; ticker:{' '}
-          <code>api.exchange.coinbase.com</code>. Prediction markets:{' '}
-          <code>gamma-api.polymarket.com</code>. Portfolio persists in
-          localStorage.
+          <code>api.exchange.coinbase.com</code>. Prediction markets &amp; 5m
+          Up/Down:{' '}
+          <code>gamma-api.polymarket.com</code> +{' '}
+          <code>clob.polymarket.com</code>. Portfolios persist in localStorage.
         </p>
       </footer>
     </div>

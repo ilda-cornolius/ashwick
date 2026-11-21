@@ -228,6 +228,201 @@ h3,
   box-shadow: 0 0 10px rgba(126, 184, 255, 0.45);
 }
 
+.dot.five {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(61, 207, 142, 0.45);
+}
+
+.pill-blue {
+  border-color: rgba(126, 184, 255, 0.35);
+  color: var(--blue);
+  background: rgba(126, 184, 255, 0.1);
+}
+
+/* —— 5-minute Up/Down —— */
+.five-min-stage {
+  margin-bottom: 22px;
+  animation: rise 0.9s 0.12s ease both;
+}
+
+.five-min-panel {
+  padding: 16px;
+}
+
+.five-min-sub {
+  margin: 4px 0 0;
+  font-size: 11px;
+}
+
+.five-min-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.five-min-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.five-min-timer,
+.five-min-bank {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.five-min-timer strong,
+.five-min-bank strong {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.timer-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin: 6px 0 2px;
+}
+
+.timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber), var(--green));
+  transition: width 0.25s linear;
+}
+
+.five-min-odds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.odds-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: left;
+  transition: 0.15s ease;
+}
+
+.odds-card strong {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.odds-card.up:hover:not(:disabled) {
+  border-color: rgba(61, 207, 142, 0.5);
+  background: rgba(61, 207, 142, 0.1);
+}
+
+.odds-card.down:hover:not(:disabled) {
+  border-color: rgba(240, 113, 120, 0.5);
+  background: rgba(240, 113, 120, 0.1);
+}
+
+.odds-card.up strong {
+  color: var(--green);
+}
+
+.odds-card.down strong {
+  color: var(--red);
+}
+
+.odds-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.five-min-stake {
+  margin-bottom: 12px;
+}
+
+.five-min-stake label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+
+.stake-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.stake-row .input {
+  margin-bottom: 0;
+}
+
+.stake-presets {
+  margin-bottom: 0;
+  min-width: 200px;
+}
+
+.five-min-pos {
+  margin-top: 4px;
+}
+
+.five-min-history {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.five-min-history h3 {
+  font-size: 0.85rem;
+}
+
+.five-min-history .panel-head {
+  margin-bottom: 8px;
+}
+
+.five-hist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.five-hist-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.five-min-panel code {
+  color: #b8c0d4;
+  font-size: 10px;
+}
+
 .chart-panel {
   display: flex;
   flex-direction: column;
@@ -853,6 +1048,16 @@ h3,
 
   .desk-grid {
     grid-template-columns: 1fr;
+  }
+
+  .five-min-hero,
+  .five-min-odds,
+  .stake-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stake-presets {
+    min-width: 0;
   }
 
   .indicator-readouts {
