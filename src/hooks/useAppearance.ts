@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   loadAppearance,
+  nextTheme,
   readWallpaperFile,
   saveAppearance,
   wallpaperCss,
@@ -28,7 +29,7 @@ export function useAppearance() {
   const toggleMode = useCallback(() => {
     setPrefs((p) => ({
       ...p,
-      mode: p.mode === 'desk' ? 'aero' : 'desk',
+      mode: nextTheme(p.mode),
     }))
   }, [])
 

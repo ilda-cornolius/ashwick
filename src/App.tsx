@@ -59,6 +59,11 @@ export default function App() {
 
       <header className="topbar">
         <div className="brand-lockup">
+          <span className="traffic-lights" aria-hidden>
+            <i className="tl tl-close" />
+            <i className="tl tl-min" />
+            <i className="tl tl-zoom" />
+          </span>
           <span className="brand-mark" aria-hidden />
           <div>
             <p className="brand-name">ASHWICK</p>
@@ -83,7 +88,7 @@ export default function App() {
             mode={appearance.prefs.mode}
             wallpaperId={appearance.prefs.wallpaperId}
             hasCustom={!!appearance.prefs.customWallpaper}
-            onToggleMode={appearance.toggleMode}
+            onMode={appearance.setMode}
             onWallpaper={appearance.setWallpaperId}
             onUpload={appearance.uploadWallpaper}
             onClearCustom={appearance.clearCustomWallpaper}

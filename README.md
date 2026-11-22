@@ -49,7 +49,7 @@ No API keys required. Endpoints are public and CORS-friendly.
 - Volume tracker panel (24h BTC volume + recent bar sparkline)
 - Polymarket BTC markets panel with clear labeling vs spot
 - 5-minute Up/Down practice: live odds when available, countdown, paper buys, settlement, history
-- **Appearance:** top-bar **Dark desk / Aero glass** toggle + **Wallpaper** picker (built-ins or upload); both themes keep trading/5m intact
+- **Appearance:** top-bar theme switcher **Dark desk / Aero glass / macOS Glass** + **Wallpaper** (Big Sur / Sierra / Sonoma / Harbor or upload). macOS Glass uses system `-apple-system` / SF Pro when present, vibrancy-style `backdrop-filter`, and traffic-light chrome. Persists in `ashwick.appearance.v1`.
 
 ## Notes / limitations
 

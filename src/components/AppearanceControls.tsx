@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { BUILTIN_WALLPAPERS, type ThemeMode, type WallpaperId } from '../lib/theme'
+import {
+  BUILTIN_WALLPAPERS,
+  THEME_OPTIONS,
+  type ThemeMode,
+  type WallpaperId,
+} from '../lib/theme'
 
 type Props = {
   mode: ThemeMode
   wallpaperId: WallpaperId
   hasCustom: boolean
-  onToggleMode: () => void
+  onMode: (mode: ThemeMode) => void
   onWallpaper: (id: WallpaperId) => void
   onUpload: (file: File) => Promise<boolean>
   onClearCustom: () => void
@@ -16,7 +21,7 @@ export function AppearanceControls({
   mode,
   wallpaperId,
   hasCustom,
-  onToggleMode,
+  onMode,
   onWallpaper,
   onUpload,
   onClearCustom,
@@ -37,15 +42,24 @@ export function AppearanceControls({
 
   return (
     <div className="appearance-controls" ref={rootRef}>
-      <button
-        type="button"
-        className={`pill pill-theme${mode === 'aero' ? ' active' : ''}`}
-        onClick={onToggleMode}
-        aria-pressed={mode === 'aero'}
-        title="Toggle dark desk ↔ Apple Aero glass"
+      <div
+        className="theme-switch"
+        role="group"
+        aria-label="UI theme"
       >
-        {mode === 'aero' ? 'Aero glass' : 'Dark desk'}
-      </button>
+        {THEME_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            className={`theme-switch-btn${mode === opt.id ? ' active' : ''}`}
+            aria-pressed={mode === opt.id}
+            title={opt.hint}
+            onClick={() => onMode(opt.id)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       <div className="wallpaper-menu">
         <button
@@ -117,7 +131,8 @@ export function AppearanceControls({
             )}
             {error && <p className="wall-error">{error}</p>}
             <p className="muted wall-hint">
-              Theme + wallpaper save in localStorage.
+              Theme + wallpaper save in localStorage. macOS Glass uses system
+              fonts (−apple-system / SF Pro when available).
             </p>
           </div>
         )}

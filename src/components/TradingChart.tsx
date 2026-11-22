@@ -34,17 +34,20 @@ export function TradingChart({
   useEffect(() => {
     if (!containerRef.current) return
 
-    const aero = theme === 'aero'
-    const textColor = aero ? '#4a5568' : '#8b93a7'
-    const gridColor = aero
-      ? 'rgba(60, 80, 100, 0.1)'
+    const lightUi = theme === 'aero' || theme === 'macos'
+    const textColor = lightUi ? '#3c3c43' : '#8b93a7'
+    const gridColor = lightUi
+      ? 'rgba(60, 60, 67, 0.1)'
       : 'rgba(139, 147, 167, 0.08)'
-    const borderColor = aero
-      ? 'rgba(60, 80, 100, 0.18)'
+    const borderColor = lightUi
+      ? 'rgba(60, 60, 67, 0.18)'
       : 'rgba(139, 147, 167, 0.15)'
-    const cross = aero
-      ? 'rgba(0, 122, 255, 0.35)'
-      : 'rgba(232, 184, 74, 0.35)'
+    const cross =
+      theme === 'macos'
+        ? 'rgba(0, 122, 255, 0.4)'
+        : theme === 'aero'
+          ? 'rgba(0, 122, 255, 0.35)'
+          : 'rgba(232, 184, 74, 0.35)'
 
     const chart = createChart(containerRef.current, {
       layout: {
@@ -100,7 +103,7 @@ export function TradingChart({
       )
     } else {
       lineSeries = chart.addSeries(LineSeries, {
-        color: aero ? '#007aff' : '#e8b84a',
+        color: lightUi ? '#007aff' : '#e8b84a',
         lineWidth: 2,
         priceLineVisible: false,
       })

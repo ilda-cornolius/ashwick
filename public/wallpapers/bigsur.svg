@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.15" y2="1">
+      <stop offset="0%" stop-color="#7eb8e8"/>
+      <stop offset="28%" stop-color="#a8cce8"/>
+      <stop offset="52%" stop-color="#d4e4f0"/>
+      <stop offset="72%" stop-color="#e8ddd0"/>
+      <stop offset="100%" stop-color="#c4a882"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#eef4f8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d8c8b0" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8eabbf"/>
+      <stop offset="100%" stop-color="#6a8496"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6d8a78"/>
+      <stop offset="100%" stop-color="#3f5a48"/>
+    </linearGradient>
+    <linearGradient id="near" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a5244"/>
+      <stop offset="100%" stop-color="#1e2e26"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="78%" cy="18%" r="18%">
+      <stop offset="0%" stop-color="#fff6d8" stop-opacity="0.95"/>
+      <stop offset="45%" stop-color="#f0c878" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#f0c878" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1200" fill="url(#sky)"/>
+  <rect width="1920" height="1200" fill="url(#sun)"/>
+  <path d="M0 520 C280 470 420 510 640 460 C860 410 980 480 1180 440 C1380 400 1580 450 1920 410 L1920 700 L0 700 Z" fill="url(#far)" opacity="0.55"/>
+  <path d="M0 600 C320 540 560 620 820 560 C1080 500 1280 580 1520 540 C1680 516 1800 560 1920 530 L1920 820 L0 820 Z" fill="url(#mid)" opacity="0.7"/>
+  <path d="M0 740 C260 680 520 760 780 710 C1100 650 1300 760 1600 720 C1760 700 1860 740 1920 720 L1920 1200 L0 1200 Z" fill="url(#near)"/>
+  <rect width="1920" height="1200" fill="url(#fog)"/>
+  <ellipse cx="420" cy="980" rx="520" ry="120" fill="#2a3c34" opacity="0.35"/>
+  <ellipse cx="1400" cy="1020" rx="640" ry="140" fill="#24342e" opacity="0.3"/>
+</svg>
