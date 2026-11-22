@@ -361,6 +361,30 @@ h3,
   margin-bottom: 12px;
 }
 
+.odds-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.odds-sell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 4.75rem;
+  padding: 10px 12px;
+  align-self: stretch;
+}
+
+.odds-sell .muted {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
 .chart-updown-dock .five-min-odds {
   margin-top: 4px;
 }
@@ -1183,6 +1207,10 @@ h3,
   .five-min-odds,
   .stake-row {
     grid-template-columns: 1fr;
+  }
+
+  .odds-side {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .stake-presets {

@@ -177,34 +177,60 @@ export function FiveMinuteMarket({
         )}
       </p>
 
-      {/* Buy/sell first — sit immediately under the chart while watching price. */}
-      <div className="five-min-odds" aria-label={`${label} Up Down buy buttons`}>
-        <button
-          type="button"
-          className="odds-card up"
-          disabled={!canTrade}
-          onClick={() => handleBuy('Up')}
-        >
-          <span className="label">Buy Up</span>
-          <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
-          <span className="muted">
-            {market ? `${(market.upPrice * 100).toFixed(1)}¢ · paper` : '…'}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="odds-card down"
-          disabled={!canTrade}
-          onClick={() => handleBuy('Down')}
-        >
-          <span className="label">Buy Down</span>
-          <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
-          <span className="muted">
-            {market
-              ? `${(market.downPrice * 100).toFixed(1)}¢ · paper`
-              : '…'}
-          </span>
-        </button>
+      {/* Buy + Sell on one row under the chart while watching price. */}
+      <div className="five-min-odds" aria-label={`${label} Up Down buy and sell`}>
+        <div className="odds-side">
+          <button
+            type="button"
+            className="odds-card up"
+            disabled={!canTrade}
+            onClick={() => handleBuy('Up')}
+          >
+            <span className="label">Buy Up</span>
+            <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
+            <span className="muted">
+              {market ? `${(market.upPrice * 100).toFixed(1)}¢ · paper` : '…'}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sell-btn odds-sell"
+            disabled={!market || market.closed || mark.upShares <= 0}
+            onClick={() => onSell('Up')}
+          >
+            Sell Up
+            {mark.upShares > 0 ? (
+              <span className="muted">{mark.upShares.toFixed(2)} sh</span>
+            ) : null}
+          </button>
+        </div>
+        <div className="odds-side">
+          <button
+            type="button"
+            className="odds-card down"
+            disabled={!canTrade}
+            onClick={() => handleBuy('Down')}
+          >
+            <span className="label">Buy Down</span>
+            <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
+            <span className="muted">
+              {market
+                ? `${(market.downPrice * 100).toFixed(1)}¢ · paper`
+                : '…'}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sell-btn odds-sell"
+            disabled={!market || market.closed || mark.downShares <= 0}
+            onClick={() => onSell('Down')}
+          >
+            Sell Down
+            {mark.downShares > 0 ? (
+              <span className="muted">{mark.downShares.toFixed(2)} sh</span>
+            ) : null}
+          </button>
+        </div>
       </div>
 
       <div className="five-min-stake">
@@ -302,14 +328,6 @@ export function FiveMinuteMarket({
                     : ''}
                 </span>
               </div>
-              <button
-                type="button"
-                className="sell-btn"
-                disabled={!market || market.closed}
-                onClick={() => onSell('Up')}
-              >
-                Sell Up
-              </button>
             </div>
           )}
 
@@ -327,14 +345,6 @@ export function FiveMinuteMarket({
                     : ''}
                 </span>
               </div>
-              <button
-                type="button"
-                className="sell-btn"
-                disabled={!market || market.closed}
-                onClick={() => onSell('Down')}
-              >
-                Sell Down
-              </button>
             </div>
           )}
         </div>
