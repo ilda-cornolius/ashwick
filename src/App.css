@@ -176,15 +176,30 @@ h3,
   font-size: 1.05rem;
 }
 
-/* —— Hero —— */
-.hero-stage {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.35fr) minmax(240px, 0.7fr);
+/* —— Desk main: chart on top, actions below —— */
+.desk-main {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: stretch;
-  min-height: 0;
   margin-bottom: 22px;
   animation: rise 0.85s 0.08s ease both;
+}
+
+.chart-dominant {
+  width: 100%;
+  min-height: min(58vh, 560px);
+}
+
+.chart-dominant .chart-canvas,
+.chart-dominant .chart-placeholder {
+  min-height: min(46vh, 460px);
+}
+
+.action-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.75fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .hero-five {
@@ -498,6 +513,10 @@ h3,
   min-height: 360px;
   padding: 14px 14px 10px;
   animation: glow-in 1s 0.15s ease both;
+}
+
+.chart-dominant.chart-panel {
+  min-height: min(58vh, 560px);
 }
 
 .chart-head h2 {
@@ -1093,13 +1112,8 @@ h3,
 
 /* —— Responsive —— */
 @media (max-width: 1100px) {
-  .hero-stage {
+  .action-stage {
     grid-template-columns: 1fr 1fr;
-    min-height: 0;
-  }
-
-  .hero-five {
-    grid-column: 1 / -1;
   }
 }
 
@@ -1119,7 +1133,7 @@ h3,
     flex-wrap: wrap;
   }
 
-  .hero-stage {
+  .action-stage {
     grid-template-columns: 1fr;
   }
 
@@ -1142,9 +1156,15 @@ h3,
     width: 100%;
   }
 
+  .chart-dominant {
+    min-height: 0;
+  }
+
+  .chart-dominant .chart-canvas,
+  .chart-dominant .chart-placeholder,
   .chart-canvas,
   .chart-placeholder {
-    min-height: 260px;
+    min-height: 280px;
   }
 }
 

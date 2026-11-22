@@ -101,24 +101,8 @@ export default function App() {
         </div>
       </header>
 
-      <main className="hero-stage">
-        <aside className="hero-five" id="five-min-updown">
-          <FiveMinuteMarket
-            market={fiveMin.market}
-            book={fiveMin.book}
-            secondsLeft={fiveMin.secondsLeft}
-            mark={fiveMin.mark}
-            onBuy={fiveMin.buy}
-            onSell={fiveMin.sell}
-            onReset={fiveMin.reset}
-            flash={fiveMin.flash}
-            error={fiveMin.error}
-            onClearError={fiveMin.clearError}
-            compact
-          />
-        </aside>
-
-        <section className="hero-chart panel chart-panel">
+      <main className="desk-main">
+        <section className="hero-chart panel chart-panel chart-dominant">
           <div className="panel-head chart-head">
             <div>
               <h2>BTC / USD</h2>
@@ -156,28 +140,46 @@ export default function App() {
           )}
         </section>
 
-        <aside className="hero-ticket">
-          <OrderTicket
-            spotPrice={market.spotPrice}
-            cash={portfolio.cash}
-            btcHeld={portfolio.position.quantity}
-            onSubmit={(side, qty) => {
-              if (market.spotPrice == null) return false
-              return placeOrder(side, qty, market.spotPrice)
-            }}
-            disabled={market.spotPrice == null}
-          />
-          {(flash || error) && (
-            <div className={`toast ${error ? 'err' : 'ok'}`} role="status">
-              {error ?? flash}
-              {error && (
-                <button type="button" onClick={clearError}>
-                  ×
-                </button>
-              )}
-            </div>
-          )}
-        </aside>
+        <section className="action-stage" aria-label="Trading actions">
+          <aside className="hero-five" id="five-min-updown">
+            <FiveMinuteMarket
+              market={fiveMin.market}
+              book={fiveMin.book}
+              secondsLeft={fiveMin.secondsLeft}
+              mark={fiveMin.mark}
+              onBuy={fiveMin.buy}
+              onSell={fiveMin.sell}
+              onReset={fiveMin.reset}
+              flash={fiveMin.flash}
+              error={fiveMin.error}
+              onClearError={fiveMin.clearError}
+              compact
+            />
+          </aside>
+
+          <aside className="hero-ticket">
+            <OrderTicket
+              spotPrice={market.spotPrice}
+              cash={portfolio.cash}
+              btcHeld={portfolio.position.quantity}
+              onSubmit={(side, qty) => {
+                if (market.spotPrice == null) return false
+                return placeOrder(side, qty, market.spotPrice)
+              }}
+              disabled={market.spotPrice == null}
+            />
+            {(flash || error) && (
+              <div className={`toast ${error ? 'err' : 'ok'}`} role="status">
+                {error ?? flash}
+                {error && (
+                  <button type="button" onClick={clearError}>
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+          </aside>
+        </section>
       </main>
 
       <section className="desk-grid">
