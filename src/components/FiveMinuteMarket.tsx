@@ -177,59 +177,136 @@ export function FiveMinuteMarket({
         )}
       </p>
 
-      {/* Buy + Sell on one row under the chart while watching price. */}
+      {/* Buy + Sell on one row; open mark sits beside Buy and under Sell. */}
       <div className="five-min-odds" aria-label={`${label} Up Down buy and sell`}>
         <div className="odds-side">
-          <button
-            type="button"
-            className="odds-card up"
-            disabled={!canTrade}
-            onClick={() => handleBuy('Up')}
-          >
-            <span className="label">Buy Up</span>
-            <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
-            <span className="muted">
-              {market ? `${(market.upPrice * 100).toFixed(1)}¢ · paper` : '…'}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="sell-btn odds-sell"
-            disabled={!market || market.closed || mark.upShares <= 0}
-            onClick={() => onSell('Up')}
-          >
-            Sell Up
-            {mark.upShares > 0 ? (
-              <span className="muted">{mark.upShares.toFixed(2)} sh</span>
-            ) : null}
-          </button>
+          <div className="odds-buy-row">
+            <button
+              type="button"
+              className="odds-card up"
+              disabled={!canTrade}
+              onClick={() => handleBuy('Up')}
+            >
+              <span className="label">Buy Up</span>
+              <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
+              <span className="muted">
+                {market ? `${(market.upPrice * 100).toFixed(1)}¢ · paper` : '…'}
+              </span>
+            </button>
+            <div className="odds-position" aria-live="polite">
+              <span className="label">Open Up</span>
+              {mark.upShares > 0 ? (
+                <>
+                  <strong className="up">{mark.upShares.toFixed(2)} sh</strong>
+                  <span className="muted">
+                    Mark {formatUsd(mark.upMark)} · cost {formatUsd(mark.upCost)}
+                  </span>
+                  <span
+                    className={
+                      mark.upMark - mark.upCost >= 0 ? 'up' : 'down'
+                    }
+                  >
+                    {mark.upMark - mark.upCost >= 0 ? '+' : ''}
+                    {formatUsd(mark.upMark - mark.upCost)}
+                  </span>
+                </>
+              ) : (
+                <span className="muted">No open Up</span>
+              )}
+            </div>
+          </div>
+          <div className="odds-sell-col">
+            <button
+              type="button"
+              className="sell-btn odds-sell"
+              disabled={!market || market.closed || mark.upShares <= 0}
+              onClick={() => onSell('Up')}
+            >
+              Sell Up
+            </button>
+            <div className="odds-position odds-position-under" aria-live="polite">
+              {mark.upShares > 0 ? (
+                <>
+                  <span className="label">Mark</span>
+                  <strong>{formatUsd(mark.upMark)}</strong>
+                  <span className="muted">
+                    {mark.upShares.toFixed(2)} sh
+                    {market ? ` · @ ${(market.upPrice * 100).toFixed(1)}¢` : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="muted">—</span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="odds-side">
-          <button
-            type="button"
-            className="odds-card down"
-            disabled={!canTrade}
-            onClick={() => handleBuy('Down')}
-          >
-            <span className="label">Buy Down</span>
-            <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
-            <span className="muted">
-              {market
-                ? `${(market.downPrice * 100).toFixed(1)}¢ · paper`
-                : '…'}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="sell-btn odds-sell"
-            disabled={!market || market.closed || mark.downShares <= 0}
-            onClick={() => onSell('Down')}
-          >
-            Sell Down
-            {mark.downShares > 0 ? (
-              <span className="muted">{mark.downShares.toFixed(2)} sh</span>
-            ) : null}
-          </button>
+          <div className="odds-buy-row">
+            <button
+              type="button"
+              className="odds-card down"
+              disabled={!canTrade}
+              onClick={() => handleBuy('Down')}
+            >
+              <span className="label">Buy Down</span>
+              <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
+              <span className="muted">
+                {market
+                  ? `${(market.downPrice * 100).toFixed(1)}¢ · paper`
+                  : '…'}
+              </span>
+            </button>
+            <div className="odds-position" aria-live="polite">
+              <span className="label">Open Down</span>
+              {mark.downShares > 0 ? (
+                <>
+                  <strong className="down">
+                    {mark.downShares.toFixed(2)} sh
+                  </strong>
+                  <span className="muted">
+                    Mark {formatUsd(mark.downMark)} · cost{' '}
+                    {formatUsd(mark.downCost)}
+                  </span>
+                  <span
+                    className={
+                      mark.downMark - mark.downCost >= 0 ? 'up' : 'down'
+                    }
+                  >
+                    {mark.downMark - mark.downCost >= 0 ? '+' : ''}
+                    {formatUsd(mark.downMark - mark.downCost)}
+                  </span>
+                </>
+              ) : (
+                <span className="muted">No open Down</span>
+              )}
+            </div>
+          </div>
+          <div className="odds-sell-col">
+            <button
+              type="button"
+              className="sell-btn odds-sell"
+              disabled={!market || market.closed || mark.downShares <= 0}
+              onClick={() => onSell('Down')}
+            >
+              Sell Down
+            </button>
+            <div className="odds-position odds-position-under" aria-live="polite">
+              {mark.downShares > 0 ? (
+                <>
+                  <span className="label">Mark</span>
+                  <strong>{formatUsd(mark.downMark)}</strong>
+                  <span className="muted">
+                    {mark.downShares.toFixed(2)} sh
+                    {market
+                      ? ` · @ ${(market.downPrice * 100).toFixed(1)}¢`
+                      : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="muted">—</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

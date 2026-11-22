@@ -365,6 +365,22 @@ h3,
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  align-items: start;
+}
+
+.odds-buy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(5.5rem, 0.9fr);
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.odds-sell-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 5.25rem;
   align-items: stretch;
 }
 
@@ -385,8 +401,50 @@ h3,
   font-size: 10px;
 }
 
+.odds-position {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(232, 184, 74, 0.06);
+}
+
+.odds-position .label {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.odds-position strong {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.odds-position-under {
+  padding: 8px 10px;
+  text-align: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.odds-position-under strong {
+  font-size: 0.85rem;
+}
+
 .chart-updown-dock .five-min-odds {
   margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .odds-buy-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .odds-card {
