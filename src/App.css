@@ -82,6 +82,20 @@ h3,
   pointer-events: none;
 }
 
+.atmosphere.has-wallpaper {
+  background-color: #1a1d24;
+}
+
+.atmosphere.has-wallpaper::after {
+  background-image: none;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 10, 14, 0.35) 0%,
+    rgba(8, 10, 14, 0.55) 100%
+  );
+  mask-image: none;
+}
+
 /* —— Top bar —— */
 .topbar {
   display: flex;
@@ -1132,4 +1146,274 @@ h3,
   .chart-placeholder {
     min-height: 260px;
   }
+}
+
+/* —— Appearance controls —— */
+.appearance-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.pill-theme,
+.pill-wall {
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  transition: 0.15s ease;
+}
+
+.pill-theme:hover,
+.pill-wall:hover,
+.pill-theme.active,
+.pill-wall.active {
+  color: var(--text);
+  border-color: rgba(126, 184, 255, 0.45);
+  background: rgba(126, 184, 255, 0.12);
+}
+
+.wallpaper-menu {
+  position: relative;
+}
+
+.wallpaper-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: min(300px, 86vw);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-panel);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  animation: rise 0.2s ease both;
+}
+
+.wallpaper-pop-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+}
+
+.wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wall-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.wall-swatch.active {
+  border-color: rgba(0, 122, 255, 0.55);
+  color: var(--text);
+  box-shadow: 0 0 0 1px rgba(0, 122, 255, 0.25);
+}
+
+.wall-preview {
+  display: block;
+  width: 100%;
+  height: 44px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+}
+
+.wall-none {
+  background: linear-gradient(145deg, #0a0d13, #1a2030);
+}
+
+.wall-custom {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 18px;
+  color: var(--text);
+}
+
+.wall-clear {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.wall-error {
+  margin: 8px 0 0;
+  color: var(--red);
+  font-size: 11px;
+}
+
+.wall-hint {
+  margin: 8px 0 0;
+  font-size: 10px;
+}
+
+/* —— Apple Aero glass theme —— */
+.theme-aero,
+[data-theme='aero'] {
+  --bg-deep: #d8dee8;
+  --bg-elevated: rgba(255, 255, 255, 0.55);
+  --bg-panel: rgba(255, 255, 255, 0.48);
+  --line: rgba(255, 255, 255, 0.55);
+  --text: #1d2430;
+  --muted: #5b6575;
+  --amber: #b8860b;
+  --amber-dim: rgba(184, 134, 11, 0.14);
+  --green: #1f9d63;
+  --red: #d94a52;
+  --blue: #007aff;
+  --radius: 18px;
+}
+
+body[data-theme='aero'] {
+  background: #c9d3e0;
+  color: var(--text);
+}
+
+.theme-aero .atmosphere:not(.has-wallpaper) {
+  background:
+    radial-gradient(ellipse 70% 50% at 12% 0%, rgba(255, 255, 255, 0.85), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 88% 12%, rgba(160, 200, 235, 0.45), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(210, 220, 200, 0.35), transparent 55%),
+    linear-gradient(180deg, #e8eef6 0%, #cfd8e6 45%, #b8c4d4 100%);
+}
+
+.theme-aero .atmosphere:not(.has-wallpaper)::after {
+  background-image: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0)
+  );
+  mask-image: none;
+}
+
+.theme-aero .atmosphere.has-wallpaper::after {
+  background: linear-gradient(
+    180deg,
+    rgba(220, 228, 238, 0.25) 0%,
+    rgba(200, 210, 222, 0.45) 100%
+  );
+}
+
+.theme-aero .panel {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 12px 32px rgba(40, 55, 80, 0.12);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+}
+
+.theme-aero .brand-name {
+  color: var(--text);
+}
+
+.theme-aero .brand-mark {
+  background: linear-gradient(145deg, #f4f7fb 0%, #a8c0d8 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 8px 20px rgba(60, 90, 120, 0.18);
+}
+
+.theme-aero .brand-mark::after {
+  color: #243044;
+}
+
+.theme-aero .live-price,
+.theme-aero .toolbar-group,
+.theme-aero .input,
+.theme-aero .five-min-timer,
+.theme-aero .five-min-bank,
+.theme-aero .five-min-activity,
+.theme-aero .odds,
+.theme-aero .odds-card {
+  background: rgba(255, 255, 255, 0.38);
+  border-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+}
+
+.theme-aero .pill {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+}
+
+.theme-aero .pill-sim {
+  color: #8a6a10;
+  background: rgba(184, 134, 11, 0.12);
+  border-color: rgba(184, 134, 11, 0.3);
+}
+
+.theme-aero .pill-five,
+.theme-aero .pill-theme.active,
+.theme-aero .pill-wall.active {
+  color: #0056c7;
+  background: rgba(0, 122, 255, 0.12);
+  border-color: rgba(0, 122, 255, 0.35);
+}
+
+.theme-aero .pill-blue {
+  color: #0056c7;
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.theme-aero .toolbar-group button.active {
+  background: rgba(0, 122, 255, 0.12);
+  color: #0056c7;
+}
+
+.theme-aero .cta.buy {
+  background: linear-gradient(180deg, #3dd68c, #1f9d63);
+  color: #04301c;
+}
+
+.theme-aero .cta.sell,
+.theme-aero .sell-btn {
+  background: linear-gradient(180deg, #f28b90, #d94a52);
+  color: #3a0a0d;
+  border-color: transparent;
+}
+
+.theme-aero .sell-btn {
+  background: rgba(217, 74, 82, 0.14);
+  border: 1px solid rgba(217, 74, 82, 0.4);
+  color: var(--red);
+}
+
+.theme-aero .five-min-open {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(184, 134, 11, 0.28);
+}
+
+.theme-aero .wallpaper-pop {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 18px 40px rgba(40, 55, 80, 0.18);
+}
+
+.theme-aero .site-foot code {
+  color: #3a4a60;
+}
+
+.theme-aero .toast.ok {
+  background: rgba(31, 157, 99, 0.12);
+}
+
+.theme-aero .toast.err {
+  background: rgba(217, 74, 82, 0.12);
 }

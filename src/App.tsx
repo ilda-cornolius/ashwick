@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AppearanceControls } from './components/AppearanceControls'
 import { FiveMinuteMarket } from './components/FiveMinuteMarket'
 import { IndicatorBar } from './components/IndicatorBar'
 import { OrderTicket } from './components/OrderTicket'
@@ -7,6 +8,7 @@ import { PortfolioSummary } from './components/PortfolioSummary'
 import { TradeHistory } from './components/TradeHistory'
 import { TradingChart } from './components/TradingChart'
 import { VolumeTracker } from './components/VolumeTracker'
+import { useAppearance } from './hooks/useAppearance'
 import { useFiveMinuteMarket } from './hooks/useFiveMinuteMarket'
 import { useMarketData } from './hooks/useMarketData'
 import { usePortfolio } from './hooks/usePortfolio'
@@ -23,6 +25,7 @@ export default function App() {
     supportResistance: true,
   })
 
+  const appearance = useAppearance()
   const market = useMarketData(interval)
   const { portfolio, placeOrder, reset, flash, error, clearError } = usePortfolio()
   const fiveMin = useFiveMinuteMarket(market.spotPrice)
@@ -36,8 +39,23 @@ export default function App() {
       : null
 
   return (
-    <div className="app-shell">
-      <div className="atmosphere" aria-hidden />
+    <div
+      className={`app-shell theme-${appearance.prefs.mode}`}
+      data-theme={appearance.prefs.mode}
+    >
+      <div
+        className={`atmosphere${appearance.wallpaper ? ' has-wallpaper' : ''}`}
+        aria-hidden
+        style={
+          appearance.wallpaper
+            ? {
+                backgroundImage: appearance.wallpaper,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : undefined
+        }
+      />
 
       <header className="topbar">
         <div className="brand-lockup">
@@ -61,6 +79,16 @@ export default function App() {
               </span>
             )}
           </div>
+          <AppearanceControls
+            mode={appearance.prefs.mode}
+            wallpaperId={appearance.prefs.wallpaperId}
+            hasCustom={!!appearance.prefs.customWallpaper}
+            onToggleMode={appearance.toggleMode}
+            onWallpaper={appearance.setWallpaperId}
+            onUpload={appearance.uploadWallpaper}
+            onClearCustom={appearance.clearCustomWallpaper}
+            error={appearance.error}
+          />
           <a className="pill pill-five" href="#five-min-updown">
             5m Up/Down
           </a>
@@ -112,6 +140,7 @@ export default function App() {
               candles={market.candles}
               toggles={toggles}
               chartType={chartType}
+              theme={appearance.prefs.mode}
             />
           ) : (
             <div className="chart-placeholder">

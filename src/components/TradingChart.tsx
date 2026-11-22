@@ -12,42 +12,61 @@ import {
   type Time,
 } from 'lightweight-charts'
 import { computeRsi, detectSupportResistance } from '../lib/indicators'
+import type { ThemeMode } from '../lib/theme'
 import type { Candle, IndicatorToggles } from '../types'
 
 type Props = {
   candles: Candle[]
   toggles: IndicatorToggles
   chartType: 'candle' | 'line'
+  theme?: ThemeMode
 }
 
-export function TradingChart({ candles, toggles, chartType }: Props) {
+export function TradingChart({
+  candles,
+  toggles,
+  chartType,
+  theme = 'desk',
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
 
+    const aero = theme === 'aero'
+    const textColor = aero ? '#4a5568' : '#8b93a7'
+    const gridColor = aero
+      ? 'rgba(60, 80, 100, 0.1)'
+      : 'rgba(139, 147, 167, 0.08)'
+    const borderColor = aero
+      ? 'rgba(60, 80, 100, 0.18)'
+      : 'rgba(139, 147, 167, 0.15)'
+    const cross = aero
+      ? 'rgba(0, 122, 255, 0.35)'
+      : 'rgba(232, 184, 74, 0.35)'
+
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#8b93a7',
+        textColor,
         fontFamily: "'IBM Plex Mono', monospace",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: 'rgba(139, 147, 167, 0.08)' },
-        horzLines: { color: 'rgba(139, 147, 167, 0.08)' },
+        vertLines: { color: gridColor },
+        horzLines: { color: gridColor },
       },
       crosshair: {
-        vertLine: { color: 'rgba(232, 184, 74, 0.35)', width: 1, style: 2 },
-        horzLine: { color: 'rgba(232, 184, 74, 0.35)', width: 1, style: 2 },
+        vertLine: { color: cross, width: 1, style: 2 },
+        horzLine: { color: cross, width: 1, style: 2 },
       },
       rightPriceScale: {
-        borderColor: 'rgba(139, 147, 167, 0.15)',
+        borderColor,
         scaleMargins: { top: 0.08, bottom: toggles.volume || toggles.rsi ? 0.28 : 0.08 },
       },
       timeScale: {
-        borderColor: 'rgba(139, 147, 167, 0.15)',
+        borderColor,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -81,7 +100,7 @@ export function TradingChart({ candles, toggles, chartType }: Props) {
       )
     } else {
       lineSeries = chart.addSeries(LineSeries, {
-        color: '#e8b84a',
+        color: aero ? '#007aff' : '#e8b84a',
         lineWidth: 2,
         priceLineVisible: false,
       })
@@ -179,7 +198,7 @@ export function TradingChart({ candles, toggles, chartType }: Props) {
       chart.remove()
       chartRef.current = null
     }
-  }, [candles, toggles, chartType])
+  }, [candles, toggles, chartType, theme])
 
   return <div className="chart-canvas" ref={containerRef} role="img" aria-label="BTC price chart" />
 }

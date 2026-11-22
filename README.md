@@ -43,12 +43,13 @@ No API keys required. Endpoints are public and CORS-friendly.
 ## Features
 
 - Paper portfolio ($100,000 starting cash) with buy/sell ticket, equity, unrealized P&amp;L, trade history
-- Persistence via `localStorage` (`ashwick.portfolio.v1`, `ashwick.fiveMinute.v1`)
+- Persistence via `localStorage` (`ashwick.portfolio.v1`, `ashwick.fiveMinute.v1`, `ashwick.appearance.v1`)
 - Chart intervals: 1h / 6h / 1d; candle or line mode
 - Indicators: RSI(14), volume histogram, auto-detected support/resistance with markers
 - Volume tracker panel (24h BTC volume + recent bar sparkline)
 - Polymarket BTC markets panel with clear labeling vs spot
 - 5-minute Up/Down practice: live odds when available, countdown, paper buys, settlement, history
+- **Appearance:** top-bar **Dark desk / Aero glass** toggle + **Wallpaper** picker (built-ins or upload); both themes keep trading/5m intact
 
 ## Notes / limitations
 

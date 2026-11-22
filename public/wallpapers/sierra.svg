@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9ec9e8"/>
+      <stop offset="45%" stop-color="#c9dde9"/>
+      <stop offset="100%" stop-color="#e8e4d8"/>
+    </linearGradient>
+    <linearGradient id="ridge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6a8499"/>
+      <stop offset="100%" stop-color="#3f5363"/>
+    </linearGradient>
+    <linearGradient id="ridge2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8fa3b0"/>
+      <stop offset="100%" stop-color="#5a6d7a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <ellipse cx="1180" cy="220" rx="90" ry="90" fill="#f4f0df" opacity="0.85"/>
+  <path d="M0 620 L220 480 L420 560 L680 400 L920 520 L1200 360 L1600 500 L1600 1000 L0 1000 Z" fill="url(#ridge2)" opacity="0.7"/>
+  <path d="M0 740 L280 560 L520 650 L780 500 L1100 620 L1400 480 L1600 580 L1600 1000 L0 1000 Z" fill="url(#ridge)"/>
+  <path d="M0 860 Q400 780 800 860 T1600 820 L1600 1000 L0 1000 Z" fill="#4a5c4f" opacity="0.55"/>
+</svg>
