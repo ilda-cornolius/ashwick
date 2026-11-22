@@ -216,6 +216,7 @@ h3,
   flex-direction: column;
 }
 
+.chart-dominant .chart-stage,
 .chart-dominant .chart-canvas,
 .chart-dominant .chart-placeholder {
   min-height: min(34vh, 340px);
@@ -641,6 +642,50 @@ h3,
 
 .chart-head h2 {
   font-size: 1.05rem;
+}
+
+.chart-stage {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.chart-zoom-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.chart-zoom-controls button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chart-zoom-controls button:hover {
+  border-color: rgba(126, 184, 255, 0.4);
+  background: rgba(126, 184, 255, 0.12);
 }
 
 .chart-canvas {
@@ -1285,8 +1330,10 @@ h3,
   }
 
   .chart-square,
+  .chart-dominant .chart-stage,
   .chart-dominant .chart-canvas,
   .chart-dominant .chart-placeholder,
+  .chart-stage,
   .chart-canvas,
   .chart-placeholder {
     min-height: 280px;
