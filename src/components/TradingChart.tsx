@@ -20,6 +20,8 @@ type Props = {
   toggles: IndicatorToggles
   chartType: 'candle' | 'line'
   theme?: ThemeMode
+  /** Bump to force re-running detectSupportResistance and redrawing S/R lines. */
+  levelsRevision?: number
 }
 
 export function TradingChart({
@@ -27,6 +29,7 @@ export function TradingChart({
   toggles,
   chartType,
   theme = 'desk',
+  levelsRevision = 0,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -201,7 +204,7 @@ export function TradingChart({
       chart.remove()
       chartRef.current = null
     }
-  }, [candles, toggles, chartType, theme])
+  }, [candles, toggles, chartType, theme, levelsRevision])
 
   return <div className="chart-canvas" ref={containerRef} role="img" aria-label="BTC price chart" />
 }

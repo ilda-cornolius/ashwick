@@ -4,6 +4,7 @@ import type {
   FiveMinuteBook,
   FiveMinuteMarketSnapshot,
   FiveMinuteSide,
+  PredictionWindowMinutes,
 } from '../types'
 
 type Mark = {
@@ -23,13 +24,15 @@ type Props = {
   book: FiveMinuteBook
   secondsLeft: number
   mark: Mark
+  durationMinutes: PredictionWindowMinutes
+  onDuration: (m: PredictionWindowMinutes) => void
   onBuy: (side: FiveMinuteSide, usd: number) => boolean
   onSell: (side: FiveMinuteSide) => boolean
   onReset: () => void
   flash: string | null
   error: string | null
   onClearError: () => void
-  /** Slim layout for the first-viewport hero column */
+  /** Slim layout docked under the chart */
   compact?: boolean
 }
 
@@ -81,6 +84,8 @@ export function FiveMinuteMarket({
   book,
   secondsLeft,
   mark,
+  durationMinutes,
+  onDuration,
   onBuy,
   onSell,
   onReset,
@@ -105,6 +110,7 @@ export function FiveMinuteMarket({
   }, [market, secondsLeft])
 
   const hasOpen = mark.upShares > 0 || mark.downShares > 0
+  const label = `${durationMinutes}m`
 
   const handleBuy = (side: FiveMinuteSide) => {
     if (!canTrade) return
@@ -116,18 +122,36 @@ export function FiveMinuteMarket({
     <section
       className={`panel five-min-panel${compact ? ' five-min-compact' : ''}`}
     >
-      <div className="panel-head">
+      <div className="panel-head five-min-head">
         <div>
-          <h2>5m Up/Down</h2>
+          <h2>Up/Down</h2>
           <p className="muted five-min-sub">
-            Polymarket-style · paper practice
+            Prediction window · paper practice
           </p>
         </div>
         <div className="five-min-pills">
+          <div
+            className="toolbar-group duration-toggle"
+            role="group"
+            aria-label="Prediction window length"
+          >
+            {([5, 30] as PredictionWindowMinutes[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={durationMinutes === m ? 'active' : ''}
+                onClick={() => onDuration(m)}
+              >
+                {m} min
+              </button>
+            ))}
+          </div>
           {market?.liveOdds ? (
             <span className="pill pill-blue">Live odds</span>
           ) : (
-            <span className="pill pill-warn">Simulated</span>
+            <span className="pill pill-warn">
+              Simulated{durationMinutes === 30 ? ' · no PM 30m' : ''}
+            </span>
           )}
           <button type="button" className="ghost-btn" onClick={onReset}>
             Reset
@@ -138,21 +162,74 @@ export function FiveMinuteMarket({
       <p className="feed-note">
         {market?.liveOdds ? (
           <>
-            Live <strong>Gamma + CLOB</strong> odds
+            Live <strong>Gamma + CLOB</strong> {label} odds
             {compact ? '.' : <> for <code>{market.slug}</code>.</>} Buy or sell
             paper before the window ends — auto-settles at expiry.
           </>
         ) : (
           <>
-            <strong>Practice / simulated</strong> Polymarket-style odds from
-            Coinbase spot. Settles on open→close.
+            <strong>Practice / simulated {label}</strong> window
+            {durationMinutes === 30
+              ? ' (Polymarket has no active 30m BTC Up/Down series yet)'
+              : ' from Coinbase spot'}
+            . Settles on open→close.
           </>
         )}
       </p>
 
+      {/* Buy/sell first — sit immediately under the chart while watching price. */}
+      <div className="five-min-odds" aria-label={`${label} Up Down buy buttons`}>
+        <button
+          type="button"
+          className="odds-card up"
+          disabled={!canTrade}
+          onClick={() => handleBuy('Up')}
+        >
+          <span className="label">Buy Up</span>
+          <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
+          <span className="muted">
+            {market ? `${(market.upPrice * 100).toFixed(1)}¢ · paper` : '…'}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="odds-card down"
+          disabled={!canTrade}
+          onClick={() => handleBuy('Down')}
+        >
+          <span className="label">Buy Down</span>
+          <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
+          <span className="muted">
+            {market
+              ? `${(market.downPrice * 100).toFixed(1)}¢ · paper`
+              : '…'}
+          </span>
+        </button>
+      </div>
+
+      <div className="five-min-stake">
+        <label htmlFor="five-stake">Paper stake (USD)</label>
+        <div className="stake-row">
+          <input
+            id="five-stake"
+            className="input"
+            inputMode="decimal"
+            value={stake}
+            onChange={(e) => setStake(e.target.value)}
+          />
+          <div className="pct-row stake-presets">
+            {[10, 25, 50, 100].map((n) => (
+              <button key={n} type="button" onClick={() => setStake(String(n))}>
+                ${n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="five-min-hero">
         <div className="five-min-timer">
-          <span className="label">Time left</span>
+          <span className="label">Time left · {label}</span>
           <strong className={secondsLeft <= 30 ? 'down' : ''}>
             {formatClock(secondsLeft)}
           </strong>
@@ -194,55 +271,6 @@ export function FiveMinuteMarket({
               })} sh`
             : ''}
         </span>
-      </div>
-
-      <div className="five-min-odds">
-        <button
-          type="button"
-          className="odds-card up"
-          disabled={!canTrade}
-          onClick={() => handleBuy('Up')}
-        >
-          <span className="label">Up (Yes)</span>
-          <strong>{market ? formatProb(market.upPrice) : '—'}</strong>
-          <span className="muted">
-            {market ? `${(market.upPrice * 100).toFixed(1)}¢ · buy paper` : '…'}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="odds-card down"
-          disabled={!canTrade}
-          onClick={() => handleBuy('Down')}
-        >
-          <span className="label">Down (No)</span>
-          <strong>{market ? formatProb(market.downPrice) : '—'}</strong>
-          <span className="muted">
-            {market
-              ? `${(market.downPrice * 100).toFixed(1)}¢ · buy paper`
-              : '…'}
-          </span>
-        </button>
-      </div>
-
-      <div className="five-min-stake">
-        <label htmlFor="five-stake">Paper stake (USD)</label>
-        <div className="stake-row">
-          <input
-            id="five-stake"
-            className="input"
-            inputMode="decimal"
-            value={stake}
-            onChange={(e) => setStake(e.target.value)}
-          />
-          <div className="pct-row stake-presets">
-            {[10, 25, 50, 100].map((n) => (
-              <button key={n} type="button" onClick={() => setStake(String(n))}>
-                ${n}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {hasOpen && (
@@ -329,7 +357,9 @@ export function FiveMinuteMarket({
           <span className="muted">{book.history.length} closed</span>
         </div>
         {book.history.length === 0 ? (
-          <p className="empty">No settled 5m windows yet. Place a paper bet.</p>
+          <p className="empty">
+            No settled Up/Down windows yet. Place a paper bet.
+          </p>
         ) : (
           <ul className="five-hist-list">
             {book.history.slice(0, 12).map((h, i) => (
@@ -340,11 +370,17 @@ export function FiveMinuteMarket({
                       hour: 'numeric',
                       minute: '2-digit',
                     })}{' '}
-                    · {h.exitType === 'early' ? `Sold ${h.outcome}` : h.outcome ?? '—'}
+                    ·{' '}
+                    {h.exitType === 'early'
+                      ? `Sold ${h.outcome}`
+                      : (h.outcome ?? '—')}
                   </strong>
                   <span className="muted">
                     {h.exitType === 'early' ? 'early exit' : 'settled'} ·{' '}
                     {h.source === 'polymarket' ? 'PM' : 'spot'}
+                    {h.windowEnd - h.windowStart >= 1800
+                      ? ' · 30m'
+                      : ' · 5m'}
                     {h.openPrice != null && h.closePrice != null
                       ? ` · ${formatUsd(h.openPrice, 0)} → ${formatUsd(h.closePrice, 0)}`
                       : ''}

@@ -185,31 +185,65 @@ h3,
   animation: rise 0.85s 0.08s ease both;
 }
 
-.chart-dominant {
-  width: 100%;
-  min-height: min(58vh, 560px);
-}
-
-.chart-dominant .chart-canvas,
-.chart-dominant .chart-placeholder {
-  min-height: min(46vh, 460px);
-}
-
-.action-stage {
+/* Chart + Up/Down dock share one column; spot ticket sits beside. */
+.chart-trade-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.75fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.7fr);
   gap: 16px;
   align-items: start;
 }
 
-.hero-five {
+.chart-dominant {
+  width: 100%;
+  min-height: 0;
   display: flex;
-  min-width: 0;
+  flex-direction: column;
+  gap: 0;
 }
 
-.hero-five .five-min-panel {
-  width: 100%;
-  height: 100%;
+.chart-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chart-square {
+  flex: 1;
+  min-height: min(34vh, 340px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-dominant .chart-canvas,
+.chart-dominant .chart-placeholder {
+  min-height: min(34vh, 340px);
+  flex: 1;
+}
+
+/* Up/Down buy/sell sit directly under the chart square in the same panel. */
+.chart-updown-dock {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.chart-updown-dock .five-min-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  backdrop-filter: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.refresh-levels-btn {
+  white-space: nowrap;
+}
+
+.duration-toggle button {
+  min-width: 3.5rem;
 }
 
 .dot {
@@ -325,6 +359,10 @@ h3,
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.chart-updown-dock .five-min-odds {
+  margin-top: 4px;
 }
 
 .odds-card {
@@ -1112,7 +1150,7 @@ h3,
 
 /* —— Responsive —— */
 @media (max-width: 1100px) {
-  .action-stage {
+  .chart-trade-row {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1133,7 +1171,7 @@ h3,
     flex-wrap: wrap;
   }
 
-  .action-stage {
+  .chart-trade-row {
     grid-template-columns: 1fr;
   }
 
@@ -1160,6 +1198,7 @@ h3,
     min-height: 0;
   }
 
+  .chart-square,
   .chart-dominant .chart-canvas,
   .chart-dominant .chart-placeholder,
   .chart-canvas,
@@ -1597,15 +1636,13 @@ body[data-theme='macos'] {
   mask-image: none;
 }
 
-/* Sidebar vibrancy (left 5m column) */
-.theme-macos .hero-five .panel {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 0.5px 0 rgba(255, 255, 255, 0.8) inset,
-    0 10px 40px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(50px) saturate(190%);
-  -webkit-backdrop-filter: blur(50px) saturate(190%);
+/* Up/Down dock under chart stays transparent inside the glass chart panel */
+.theme-macos .chart-updown-dock .five-min-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .theme-macos .panel {

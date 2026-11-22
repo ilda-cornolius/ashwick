@@ -4,10 +4,18 @@ import type {
   FiveMinuteSide,
   FiveMinuteSource,
   FiveMinuteWindowRecord,
+  PredictionWindowMinutes,
 } from '../types'
 
 export const FIVE_MIN_STARTING_CASH = 10_000
 const STORAGE_KEY = 'ashwick.fiveMinute.v1'
+
+function normalizeBet(bet: FiveMinuteBet): FiveMinuteBet {
+  const windowSeconds = bet.windowSeconds ?? 300
+  const durationMinutes = (bet.durationMinutes ??
+    (windowSeconds >= 1800 ? 30 : 5)) as PredictionWindowMinutes
+  return { ...bet, windowSeconds, durationMinutes }
+}
 
 export function createEmptyFiveMinuteBook(
   startingCash = FIVE_MIN_STARTING_CASH,
@@ -35,9 +43,11 @@ export function loadFiveMinuteBook(): FiveMinuteBook {
         exitType: h.exitType ?? ('settled' as const),
       }),
     )
+    const openBets = (parsed.openBets ?? []).map(normalizeBet)
     return {
       ...createEmptyFiveMinuteBook(parsed.startingCash ?? FIVE_MIN_STARTING_CASH),
       ...parsed,
+      openBets,
       openPrices: parsed.openPrices ?? {},
       history,
     }
@@ -61,6 +71,8 @@ export function placeFiveMinuteBet(
   price: number,
   windowStart: number,
   source: FiveMinuteSource,
+  durationMinutes: PredictionWindowMinutes = 5,
+  windowSeconds = durationMinutes * 60,
 ): FiveMinuteOrderResult {
   if (!Number.isFinite(usdAmount) || usdAmount <= 0) {
     return { ok: false, error: 'Stake must be greater than zero.' }
@@ -69,13 +81,15 @@ export function placeFiveMinuteBet(
     return { ok: false, error: 'No valid Up/Down odds right now.' }
   }
   if (usdAmount > book.cash + 1e-9) {
-    return { ok: false, error: 'Insufficient 5m practice cash.' }
+    return { ok: false, error: 'Insufficient Up/Down practice cash.' }
   }
 
   const shares = usdAmount / price
   const bet: FiveMinuteBet = {
     id: crypto.randomUUID(),
     windowStart,
+    windowSeconds,
+    durationMinutes,
     side,
     shares,
     price,
