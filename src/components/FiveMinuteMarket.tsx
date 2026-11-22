@@ -22,6 +22,8 @@ type Props = {
   flash: string | null
   error: string | null
   onClearError: () => void
+  /** Slim layout for the first-viewport hero column */
+  compact?: boolean
 }
 
 function formatClock(totalSeconds: number): string {
@@ -54,6 +56,7 @@ export function FiveMinuteMarket({
   flash,
   error,
   onClearError,
+  compact = false,
 }: Props) {
   const [stake, setStake] = useState('25')
   const stakeNum = Number(stake)
@@ -77,22 +80,24 @@ export function FiveMinuteMarket({
   }
 
   return (
-    <section className="panel five-min-panel">
+    <section
+      className={`panel five-min-panel${compact ? ' five-min-compact' : ''}`}
+    >
       <div className="panel-head">
         <div>
-          <h2>5-minute Up / Down</h2>
+          <h2>5m Up/Down</h2>
           <p className="muted five-min-sub">
-            Polymarket-style short window · paper only
+            Polymarket-style · paper practice
           </p>
         </div>
         <div className="five-min-pills">
           {market?.liveOdds ? (
-            <span className="pill pill-blue">Live Gamma + CLOB</span>
+            <span className="pill pill-blue">Live odds</span>
           ) : (
-            <span className="pill pill-warn">Practice · simulated</span>
+            <span className="pill pill-warn">Simulated</span>
           )}
           <button type="button" className="ghost-btn" onClick={onReset}>
-            Reset bankroll
+            Reset
           </button>
         </div>
       </div>
@@ -100,18 +105,14 @@ export function FiveMinuteMarket({
       <p className="feed-note">
         {market?.liveOdds ? (
           <>
-            Odds from Polymarket public <strong>Gamma</strong> /
-            <strong> CLOB</strong> for slug{' '}
-            <code>{market.slug}</code>. Buys are paper — no real PM orders.
-            Settlement prefers Polymarket resolution; otherwise Coinbase spot
-            open→close.
+            Live <strong>Gamma + CLOB</strong> odds
+            {compact ? '.' : <> for <code>{market.slug}</code>.</>} Paper buys
+            only — settles when the 5m window ends.
           </>
         ) : (
           <>
-            Polymarket 5m market unavailable — showing{' '}
-            <strong>practice / simulated Polymarket-style</strong> odds from
-            Coinbase spot momentum. Windows still settle on Coinbase open vs
-            close.
+            <strong>Practice / simulated</strong> Polymarket-style odds from
+            Coinbase spot. Settles on open→close.
           </>
         )}
       </p>

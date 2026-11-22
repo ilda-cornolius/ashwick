@@ -61,34 +61,28 @@ export default function App() {
               </span>
             )}
           </div>
+          <a className="pill pill-five" href="#five-min-updown">
+            5m Up/Down
+          </a>
           <span className="pill pill-sim">Simulation · no real money</span>
         </div>
       </header>
 
       <main className="hero-stage">
-        <section className="hero-copy">
-          <h1>
-            Trade Bitcoin
-            <br />
-            without the risk.
-          </h1>
-          <p>
-            ASHWICK is a paper desk for BTC: live spot charts from Coinbase,
-            Polymarket prediction odds, 5-minute Up/Down practice windows,
-            RSI and support levels, and a virtual portfolio that survives refresh.
-          </p>
-          <div className="feed-legend">
-            <span>
-              <i className="dot spot" /> Spot chart · Coinbase Exchange
-            </span>
-            <span>
-              <i className="dot pm" /> Odds · Polymarket Gamma / CLOB
-            </span>
-            <span>
-              <i className="dot five" /> 5m Up/Down · paper practice
-            </span>
-          </div>
-        </section>
+        <aside className="hero-five" id="five-min-updown">
+          <FiveMinuteMarket
+            market={fiveMin.market}
+            book={fiveMin.book}
+            secondsLeft={fiveMin.secondsLeft}
+            exposure={fiveMin.exposure}
+            onBuy={fiveMin.buy}
+            onReset={fiveMin.reset}
+            flash={fiveMin.flash}
+            error={fiveMin.error}
+            onClearError={fiveMin.clearError}
+            compact
+          />
+        </aside>
 
         <section className="hero-chart panel chart-panel">
           <div className="panel-head chart-head">
@@ -150,20 +144,6 @@ export default function App() {
           )}
         </aside>
       </main>
-
-      <section className="five-min-stage">
-        <FiveMinuteMarket
-          market={fiveMin.market}
-          book={fiveMin.book}
-          secondsLeft={fiveMin.secondsLeft}
-          exposure={fiveMin.exposure}
-          onBuy={fiveMin.buy}
-          onReset={fiveMin.reset}
-          flash={fiveMin.flash}
-          error={fiveMin.error}
-          onClearError={fiveMin.clearError}
-        />
-      </section>
 
       <section className="desk-grid">
         <PortfolioSummary
