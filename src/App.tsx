@@ -74,8 +74,9 @@ export default function App() {
             market={fiveMin.market}
             book={fiveMin.book}
             secondsLeft={fiveMin.secondsLeft}
-            exposure={fiveMin.exposure}
+            mark={fiveMin.mark}
             onBuy={fiveMin.buy}
+            onSell={fiveMin.sell}
             onReset={fiveMin.reset}
             flash={fiveMin.flash}
             error={fiveMin.error}

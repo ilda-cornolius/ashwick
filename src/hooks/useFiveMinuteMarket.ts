@@ -6,8 +6,9 @@ import {
   windowSlug,
 } from '../api/fiveMinute'
 import {
+  closeFiveMinuteSide,
   loadFiveMinuteBook,
-  openExposure,
+  markOpenPosition,
   placeFiveMinuteBet,
   rememberOpenPrice,
   resetFiveMinuteBook,
@@ -141,10 +142,14 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
     return Math.max(0, end - Math.floor(now / 1000))
   }, [market, now])
 
-  const exposure = useMemo(
-    () => openExposure(book, market?.windowStart ?? floorWindowStart(now)),
-    [book, market?.windowStart, now],
-  )
+  const windowStart = market?.windowStart ?? floorWindowStart(now)
+
+  const mark = useMemo(() => {
+    if (!market) {
+      return markOpenPosition(book, windowStart, 0.5, 0.5)
+    }
+    return markOpenPosition(book, windowStart, market.upPrice, market.downPrice)
+  }, [book, market, windowStart])
 
   const buy = useCallback(
     (side: FiveMinuteSide, usdAmount: number) => {
@@ -175,6 +180,40 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
     [book, market],
   )
 
+  const sell = useCallback(
+    (side: FiveMinuteSide) => {
+      if (!market || market.closed) {
+        setError('Cannot sell — window is closed (awaiting settle).')
+        return false
+      }
+      const price = side === 'Up' ? market.upPrice : market.downPrice
+      const openPx = book.openPrices[String(market.windowStart)] ?? null
+      const result = closeFiveMinuteSide(
+        book,
+        side,
+        price,
+        market.windowStart,
+        market.windowEnd,
+        market.slug,
+        market.source,
+        openPx,
+      )
+      if (!result.ok) {
+        setError(result.error)
+        return false
+      }
+      setBook(result.book)
+      setError(null)
+      setFlash(
+        `Sold ${side} · +$${result.proceeds.toFixed(2)} (P&L ${
+          result.pnl >= 0 ? '+' : ''
+        }$${result.pnl.toFixed(2)})`,
+      )
+      return true
+    },
+    [book, market],
+  )
+
   const reset = useCallback(() => {
     setBook(resetFiveMinuteBook())
     setFlash('5m practice bankroll reset to $10,000')
@@ -185,8 +224,9 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
     book,
     market,
     secondsLeft,
-    exposure,
+    mark,
     buy,
+    sell,
     reset,
     flash,
     error,

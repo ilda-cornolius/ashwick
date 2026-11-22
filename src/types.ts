@@ -60,6 +60,8 @@ export type IndicatorToggles = {
 export type FiveMinuteSide = 'Up' | 'Down'
 export type FiveMinuteSource = 'polymarket' | 'simulated'
 
+export type FiveMinuteVolumeSource = 'polymarket' | 'clob-book' | 'proxy' | 'none'
+
 export type FiveMinuteMarketSnapshot = {
   windowStart: number
   windowEnd: number
@@ -70,7 +72,13 @@ export type FiveMinuteMarketSnapshot = {
   downPrice: number
   closed: boolean
   acceptingOrders: boolean
+  /** Window traded volume (USD notional) when Gamma provides it */
   volume: number | null
+  /** Gamma liquidity estimate when available */
+  liquidity: number | null
+  /** Combined CLOB bid+ask size on the Up token (share units) */
+  bookDepth: number | null
+  volumeSource: FiveMinuteVolumeSource
   tokenUp: string | null
   tokenDown: string | null
   resolvedOutcome: FiveMinuteSide | null
@@ -104,6 +112,8 @@ export type FiveMinuteWindowRecord = {
   cost: number
   pnl: number
   settledAt: number | null
+  /** Window expiry settle vs early paper sell at live odds */
+  exitType: 'settled' | 'early'
 }
 
 export type FiveMinuteBook = {

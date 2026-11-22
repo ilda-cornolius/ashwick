@@ -1,23 +1,30 @@
 import { useMemo, useState } from 'react'
-import { formatProb, formatUsd } from '../lib/format'
+import { formatCompact, formatProb, formatUsd } from '../lib/format'
 import type {
   FiveMinuteBook,
   FiveMinuteMarketSnapshot,
   FiveMinuteSide,
 } from '../types'
 
-type Exposure = {
+type Mark = {
   upShares: number
   downShares: number
+  upCost: number
+  downCost: number
   cost: number
+  upMark: number
+  downMark: number
+  markValue: number
+  unrealized: number
 }
 
 type Props = {
   market: FiveMinuteMarketSnapshot | null
   book: FiveMinuteBook
   secondsLeft: number
-  exposure: Exposure
+  mark: Mark
   onBuy: (side: FiveMinuteSide, usd: number) => boolean
+  onSell: (side: FiveMinuteSide) => boolean
   onReset: () => void
   flash: string | null
   error: string | null
@@ -46,12 +53,36 @@ function formatWindow(start: number, end: number): string {
   return `${a} → ${b}`
 }
 
+function volumeLine(market: FiveMinuteMarketSnapshot | null): string {
+  if (!market) return 'Vol —'
+  if (market.volumeSource === 'polymarket' && market.volume != null) {
+    const liq =
+      market.liquidity != null ? ` · Liq ${formatCompact(market.liquidity)}` : ''
+    return `Vol ${formatCompact(market.volume)}${liq}`
+  }
+  if (market.volumeSource === 'clob-book' && market.bookDepth != null) {
+    return `CLOB depth ${market.bookDepth.toLocaleString(undefined, {
+      maximumFractionDigits: 0,
+    })} sh`
+  }
+  if (market.volumeSource === 'proxy' && market.volume != null) {
+    return `Vol proxy ${formatCompact(market.volume)} · spot move`
+  }
+  if (market.bookDepth != null) {
+    return `CLOB depth ${market.bookDepth.toLocaleString(undefined, {
+      maximumFractionDigits: 0,
+    })} sh`
+  }
+  return 'Vol unavailable'
+}
+
 export function FiveMinuteMarket({
   market,
   book,
   secondsLeft,
-  exposure,
+  mark,
   onBuy,
+  onSell,
   onReset,
   flash,
   error,
@@ -72,6 +103,8 @@ export function FiveMinuteMarket({
     const total = market.windowEnd - market.windowStart
     return Math.min(100, ((total - secondsLeft) / total) * 100)
   }, [market, secondsLeft])
+
+  const hasOpen = mark.upShares > 0 || mark.downShares > 0
 
   const handleBuy = (side: FiveMinuteSide) => {
     if (!canTrade) return
@@ -106,8 +139,8 @@ export function FiveMinuteMarket({
         {market?.liveOdds ? (
           <>
             Live <strong>Gamma + CLOB</strong> odds
-            {compact ? '.' : <> for <code>{market.slug}</code>.</>} Paper buys
-            only — settles when the 5m window ends.
+            {compact ? '.' : <> for <code>{market.slug}</code>.</>} Buy or sell
+            paper before the window ends — auto-settles at expiry.
           </>
         ) : (
           <>
@@ -137,10 +170,30 @@ export function FiveMinuteMarket({
           <span className="label">Practice cash</span>
           <strong>{formatUsd(book.cash)}</strong>
           <span className="muted">
-            Open stake {formatUsd(exposure.cost)} · start{' '}
-            {formatUsd(book.startingCash)}
+            {hasOpen
+              ? `Mark ${formatUsd(mark.markValue)} · cost ${formatUsd(mark.cost)}`
+              : `Start ${formatUsd(book.startingCash)}`}
           </span>
         </div>
+      </div>
+
+      <div className="five-min-activity" aria-live="polite">
+        <span className="label">Window activity</span>
+        <strong>{volumeLine(market)}</strong>
+        <span className="muted">
+          {market?.volumeSource === 'polymarket'
+            ? 'Polymarket window volume'
+            : market?.volumeSource === 'clob-book'
+              ? 'CLOB order-book depth proxy'
+              : market?.volumeSource === 'proxy'
+                ? 'Simulated activity proxy (spot move)'
+                : 'Waiting for volume feed'}
+          {market?.bookDepth != null && market.volumeSource === 'polymarket'
+            ? ` · book ${market.bookDepth.toLocaleString(undefined, {
+                maximumFractionDigits: 0,
+              })} sh`
+            : ''}
+        </span>
       </div>
 
       <div className="five-min-odds">
@@ -192,16 +245,70 @@ export function FiveMinuteMarket({
         </div>
       </div>
 
-      {(exposure.upShares > 0 || exposure.downShares > 0) && (
-        <div className="stat-grid compact five-min-pos">
-          <div>
-            <span className="label">Open Up shares</span>
-            <strong className="up">{exposure.upShares.toFixed(2)}</strong>
+      {hasOpen && (
+        <div className="five-min-open">
+          <div className="five-min-mtm">
+            <div>
+              <span className="label">Open mark value</span>
+              <strong>{formatUsd(mark.markValue)}</strong>
+            </div>
+            <div>
+              <span className="label">Unrealized P&amp;L</span>
+              <strong className={mark.unrealized >= 0 ? 'up' : 'down'}>
+                {mark.unrealized >= 0 ? '+' : ''}
+                {formatUsd(mark.unrealized)}
+              </strong>
+            </div>
           </div>
-          <div>
-            <span className="label">Open Down shares</span>
-            <strong className="down">{exposure.downShares.toFixed(2)}</strong>
-          </div>
+
+          {mark.upShares > 0 && (
+            <div className="five-min-side-row">
+              <div className="trade-body">
+                <strong className="up">
+                  Up · {mark.upShares.toFixed(2)} sh
+                </strong>
+                <span className="muted">
+                  Mark {formatUsd(mark.upMark)} · cost {formatUsd(mark.upCost)}
+                  {market
+                    ? ` · @ ${(market.upPrice * 100).toFixed(1)}¢`
+                    : ''}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="sell-btn"
+                disabled={!market || market.closed}
+                onClick={() => onSell('Up')}
+              >
+                Sell Up
+              </button>
+            </div>
+          )}
+
+          {mark.downShares > 0 && (
+            <div className="five-min-side-row">
+              <div className="trade-body">
+                <strong className="down">
+                  Down · {mark.downShares.toFixed(2)} sh
+                </strong>
+                <span className="muted">
+                  Mark {formatUsd(mark.downMark)} · cost{' '}
+                  {formatUsd(mark.downCost)}
+                  {market
+                    ? ` · @ ${(market.downPrice * 100).toFixed(1)}¢`
+                    : ''}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="sell-btn"
+                disabled={!market || market.closed}
+                onClick={() => onSell('Down')}
+              >
+                Sell Down
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -219,25 +326,25 @@ export function FiveMinuteMarket({
       <div className="five-min-history">
         <div className="panel-head">
           <h3>Window history</h3>
-          <span className="muted">{book.history.length} settled</span>
+          <span className="muted">{book.history.length} closed</span>
         </div>
         {book.history.length === 0 ? (
           <p className="empty">No settled 5m windows yet. Place a paper bet.</p>
         ) : (
           <ul className="five-hist-list">
-            {book.history.slice(0, 12).map((h) => (
-              <li key={h.windowStart}>
+            {book.history.slice(0, 12).map((h, i) => (
+              <li key={`${h.windowStart}-${h.exitType}-${h.settledAt ?? i}`}>
                 <div className="trade-body">
                   <strong>
                     {new Date(h.windowStart * 1000).toLocaleTimeString([], {
                       hour: 'numeric',
                       minute: '2-digit',
                     })}{' '}
-                    · {h.outcome ?? '—'}
+                    · {h.exitType === 'early' ? `Sold ${h.outcome}` : h.outcome ?? '—'}
                   </strong>
                   <span className="muted">
-                    {h.bets.length} bet{h.bets.length === 1 ? '' : 's'} ·{' '}
-                    {h.source === 'polymarket' ? 'PM resolve' : 'spot settle'}
+                    {h.exitType === 'early' ? 'early exit' : 'settled'} ·{' '}
+                    {h.source === 'polymarket' ? 'PM' : 'spot'}
                     {h.openPrice != null && h.closePrice != null
                       ? ` · ${formatUsd(h.openPrice, 0)} → ${formatUsd(h.closePrice, 0)}`
                       : ''}

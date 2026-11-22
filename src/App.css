@@ -370,8 +370,74 @@ h3,
   min-width: 200px;
 }
 
-.five-min-pos {
-  margin-top: 4px;
+.five-min-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(126, 184, 255, 0.06);
+}
+
+.five-min-activity strong {
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.five-min-open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 184, 74, 0.28);
+  background: rgba(232, 184, 74, 0.06);
+}
+
+.five-min-mtm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.five-min-mtm strong {
+  display: block;
+  font-weight: 500;
+}
+
+.five-min-side-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.sell-btn {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(240, 113, 120, 0.45);
+  background: rgba(240, 113, 120, 0.12);
+  color: var(--red);
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sell-btn:hover:not(:disabled) {
+  background: rgba(240, 113, 120, 0.22);
+}
+
+.sell-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .five-min-history {

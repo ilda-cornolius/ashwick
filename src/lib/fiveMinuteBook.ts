@@ -29,11 +29,17 @@ export function loadFiveMinuteBook(): FiveMinuteBook {
     if (typeof parsed.cash !== 'number' || !Array.isArray(parsed.openBets)) {
       return createEmptyFiveMinuteBook()
     }
+    const history = (Array.isArray(parsed.history) ? parsed.history : []).map(
+      (h) => ({
+        ...h,
+        exitType: h.exitType ?? ('settled' as const),
+      }),
+    )
     return {
       ...createEmptyFiveMinuteBook(parsed.startingCash ?? FIVE_MIN_STARTING_CASH),
       ...parsed,
       openPrices: parsed.openPrices ?? {},
-      history: Array.isArray(parsed.history) ? parsed.history : [],
+      history,
     }
   } catch {
     return createEmptyFiveMinuteBook()
@@ -137,6 +143,7 @@ export function settleWindow(
     cost,
     pnl,
     settledAt: Date.now(),
+    exitType: 'settled',
   }
 
   const nextOpenPrices = { ...book.openPrices }
@@ -163,6 +170,105 @@ export function openExposure(book: FiveMinuteBook, windowStart: number) {
   const downShares = bets
     .filter((b) => b.side === 'Down')
     .reduce((s, b) => s + b.shares, 0)
-  const cost = bets.reduce((s, b) => s + b.cost, 0)
-  return { upShares, downShares, cost, bets }
+  const upCost = bets
+    .filter((b) => b.side === 'Up')
+    .reduce((s, b) => s + b.cost, 0)
+  const downCost = bets
+    .filter((b) => b.side === 'Down')
+    .reduce((s, b) => s + b.cost, 0)
+  const cost = upCost + downCost
+  return { upShares, downShares, upCost, downCost, cost, bets }
+}
+
+/** Mark open paper shares to live Up/Down odds. */
+export function markOpenPosition(
+  book: FiveMinuteBook,
+  windowStart: number,
+  upPrice: number,
+  downPrice: number,
+) {
+  const { upShares, downShares, upCost, downCost, cost, bets } = openExposure(
+    book,
+    windowStart,
+  )
+  const upMark = upShares * upPrice
+  const downMark = downShares * downPrice
+  const markValue = upMark + downMark
+  const unrealized = markValue - cost
+  return {
+    upShares,
+    downShares,
+    upCost,
+    downCost,
+    cost,
+    upMark,
+    downMark,
+    markValue,
+    unrealized,
+    bets,
+  }
+}
+
+export type CloseResult =
+  | { ok: true; book: FiveMinuteBook; proceeds: number; cost: number; pnl: number }
+  | { ok: false; error: string }
+
+/** Sell all open paper shares on one side at the current odds (early exit). */
+export function closeFiveMinuteSide(
+  book: FiveMinuteBook,
+  side: FiveMinuteSide,
+  price: number,
+  windowStart: number,
+  windowEnd: number,
+  slug: string,
+  source: FiveMinuteSource,
+  openPrice: number | null,
+): CloseResult {
+  if (!Number.isFinite(price) || price <= 0.01 || price >= 0.99) {
+    return { ok: false, error: 'No valid exit odds right now.' }
+  }
+  const sideBets = book.openBets.filter(
+    (b) => b.windowStart === windowStart && b.side === side,
+  )
+  if (sideBets.length === 0) {
+    return { ok: false, error: `No open ${side} position to sell.` }
+  }
+
+  const shares = sideBets.reduce((s, b) => s + b.shares, 0)
+  const cost = sideBets.reduce((s, b) => s + b.cost, 0)
+  const proceeds = shares * price
+  const pnl = proceeds - cost
+
+  const remainingOpen = book.openBets.filter(
+    (b) => !(b.windowStart === windowStart && b.side === side),
+  )
+
+  const record: FiveMinuteWindowRecord = {
+    windowStart,
+    windowEnd,
+    slug,
+    openPrice,
+    closePrice: null,
+    outcome: side,
+    source,
+    bets: sideBets,
+    payout: proceeds,
+    cost,
+    pnl,
+    settledAt: Date.now(),
+    exitType: 'early',
+  }
+
+  return {
+    ok: true,
+    proceeds,
+    cost,
+    pnl,
+    book: {
+      ...book,
+      cash: book.cash + proceeds,
+      openBets: remainingOpen,
+      history: [record, ...book.history].slice(0, 40),
+    },
+  }
 }
