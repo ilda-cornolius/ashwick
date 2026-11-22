@@ -10,6 +10,7 @@ type Props = {
   onChartType: (t: 'candle' | 'line') => void
   interval: ChartInterval
   onInterval: (i: ChartInterval) => void
+  onRefreshLevels: () => void
 }
 
 export function IndicatorBar({
@@ -20,6 +21,7 @@ export function IndicatorBar({
   onChartType,
   interval,
   onInterval,
+  onRefreshLevels,
 }: Props) {
   const rsi = latestRsi(candles)
   const levels = detectSupportResistance(candles)
@@ -75,10 +77,23 @@ export function IndicatorBar({
         ))}
       </div>
 
+      <button
+        type="button"
+        className="ghost-btn refresh-levels-btn"
+        onClick={onRefreshLevels}
+        title="Re-run detectSupportResistance and redraw levels on the chart"
+      >
+        Refresh levels
+      </button>
+
       <div className="indicator-readouts">
         <span>
           RSI 14{' '}
-          <strong className={rsi != null && rsi > 70 ? 'down' : rsi != null && rsi < 30 ? 'up' : ''}>
+          <strong
+            className={
+              rsi != null && rsi > 70 ? 'down' : rsi != null && rsi < 30 ? 'up' : ''
+            }
+          >
             {rsi != null ? rsi.toFixed(1) : '—'}
           </strong>
         </span>

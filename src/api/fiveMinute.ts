@@ -1,16 +1,34 @@
-import type { FiveMinuteMarketSnapshot } from '../types'
+import type {
+  FiveMinuteMarketSnapshot,
+  PredictionWindowMinutes,
+} from '../types'
 
 const GAMMA = 'https://gamma-api.polymarket.com'
 const CLOB = 'https://clob.polymarket.com'
-export const FIVE_MIN_SECONDS = 300
 
-export function floorWindowStart(nowMs = Date.now()): number {
-  const sec = Math.floor(nowMs / 1000)
-  return Math.floor(sec / FIVE_MIN_SECONDS) * FIVE_MIN_SECONDS
+export const FIVE_MIN_SECONDS = 300
+export const THIRTY_MIN_SECONDS = 1800
+
+export function windowSecondsFor(
+  durationMinutes: PredictionWindowMinutes,
+): number {
+  return durationMinutes === 30 ? THIRTY_MIN_SECONDS : FIVE_MIN_SECONDS
 }
 
-export function windowSlug(windowStart: number): string {
-  return `btc-updown-5m-${windowStart}`
+export function floorWindowStart(
+  durationMinutes: PredictionWindowMinutes = 5,
+  nowMs = Date.now(),
+): number {
+  const sec = Math.floor(nowMs / 1000)
+  const windowSec = windowSecondsFor(durationMinutes)
+  return Math.floor(sec / windowSec) * windowSec
+}
+
+export function windowSlug(
+  windowStart: number,
+  durationMinutes: PredictionWindowMinutes = 5,
+): string {
+  return `btc-updown-${durationMinutes}m-${windowStart}`
 }
 
 function parseJsonArray(value: string | string[] | undefined): string[] {
@@ -86,7 +104,9 @@ async function fetchClobMid(tokenId: string): Promise<number | null> {
 
 async function fetchClobBookDepth(tokenId: string): Promise<number | null> {
   try {
-    const res = await fetch(`${CLOB}/book?token_id=${encodeURIComponent(tokenId)}`)
+    const res = await fetch(
+      `${CLOB}/book?token_id=${encodeURIComponent(tokenId)}`,
+    )
     if (!res.ok) return null
     const data = (await res.json()) as {
       bids?: { size?: string }[]
@@ -127,7 +147,10 @@ function pickLiquidity(market: GammaMarket, event: GammaEvent): number | null {
   return null
 }
 
-function simulatedOdds(spotPrice: number | null, openPrice: number | null): {
+function simulatedOdds(
+  spotPrice: number | null,
+  openPrice: number | null,
+): {
   upPrice: number
   downPrice: number
 } {
@@ -141,20 +164,70 @@ function simulatedOdds(spotPrice: number | null, openPrice: number | null): {
   return { upPrice: up, downPrice: 1 - up }
 }
 
+function simulatedSnapshot(
+  durationMinutes: PredictionWindowMinutes,
+  spotPrice: number | null,
+  openPrice: number | null,
+  nowMs: number,
+): FiveMinuteMarketSnapshot {
+  const windowSeconds = windowSecondsFor(durationMinutes)
+  const windowStart = floorWindowStart(durationMinutes, nowMs)
+  const windowEnd = windowStart + windowSeconds
+  const sim = simulatedOdds(spotPrice, openPrice)
+  const proxyVol =
+    spotPrice != null && openPrice != null
+      ? Math.abs(spotPrice - openPrice) * 10
+      : null
+  const label = `${durationMinutes}m`
+  return {
+    windowStart,
+    windowEnd,
+    windowSeconds,
+    durationMinutes,
+    slug: windowSlug(windowStart, durationMinutes),
+    question: `Will BTC finish this ${label} window Up or Down vs open?`,
+    title: `Practice · simulated Polymarket-style ${label}`,
+    closed: nowMs / 1000 >= windowEnd,
+    acceptingOrders: nowMs / 1000 < windowEnd,
+    volume: proxyVol,
+    liquidity: null,
+    bookDepth: null,
+    volumeSource: proxyVol != null ? 'proxy' : 'none',
+    tokenUp: null,
+    tokenDown: null,
+    resolvedOutcome: null,
+    priceToBeat: openPrice,
+    finalPrice: null,
+    ...sim,
+    source: 'simulated',
+    liveOdds: false,
+  }
+}
+
+/**
+ * Fetch short-duration BTC Up/Down market.
+ * Tries Polymarket slug `btc-updown-{5|30}m-{windowStart}`; falls back to
+ * clearly labeled simulated odds when Gamma has no market (typical for 30m).
+ */
 export async function fetchFiveMinuteMarket(
   spotPrice: number | null,
   openPrice: number | null,
+  durationMinutes: PredictionWindowMinutes = 5,
   nowMs = Date.now(),
 ): Promise<FiveMinuteMarketSnapshot> {
-  const windowStart = floorWindowStart(nowMs)
-  const windowEnd = windowStart + FIVE_MIN_SECONDS
-  const slug = windowSlug(windowStart)
+  const windowSeconds = windowSecondsFor(durationMinutes)
+  const windowStart = floorWindowStart(durationMinutes, nowMs)
+  const windowEnd = windowStart + windowSeconds
+  const slug = windowSlug(windowStart, durationMinutes)
+  const label = `${durationMinutes}m`
   const base = {
     windowStart,
     windowEnd,
+    windowSeconds,
+    durationMinutes,
     slug,
-    question: 'Bitcoin Up or Down — next 5 minutes',
-    title: 'Bitcoin Up or Down (5m)',
+    question: `Bitcoin Up or Down — next ${label}`,
+    title: `Bitcoin Up or Down (${label})`,
     closed: nowMs / 1000 >= windowEnd,
     acceptingOrders: nowMs / 1000 < windowEnd,
     volume: null as number | null,
@@ -172,22 +245,7 @@ export async function fetchFiveMinuteMarket(
     const event = await fetchEventBySlug(slug)
     const market = event?.markets?.[0]
     if (!event || !market) {
-      const sim = simulatedOdds(spotPrice, openPrice)
-      // Clear activity proxy when PM is unavailable: use absolute open→spot move as "heat".
-      const proxyVol =
-        spotPrice != null && openPrice != null
-          ? Math.abs(spotPrice - openPrice) * 10
-          : null
-      return {
-        ...base,
-        ...sim,
-        volume: proxyVol,
-        volumeSource: proxyVol != null ? 'proxy' : 'none',
-        source: 'simulated',
-        liveOdds: false,
-        title: 'Practice · simulated Polymarket-style 5m',
-        question: 'Will BTC finish this 5-minute window Up or Down vs open?',
-      }
+      return simulatedSnapshot(durationMinutes, spotPrice, openPrice, nowMs)
     }
 
     const prices = parseJsonArray(market.outcomePrices).map(Number)
@@ -208,7 +266,9 @@ export async function fetchFiveMinuteMarket(
       bookDepth = depth
     }
 
-    const closed = Boolean(event.closed || market.closed || nowMs / 1000 >= windowEnd)
+    const closed = Boolean(
+      event.closed || market.closed || nowMs / 1000 >= windowEnd,
+    )
     let resolvedOutcome: 'Up' | 'Down' | null = null
     if (closed) {
       if (upPrice >= 0.99) resolvedOutcome = 'Up'
@@ -230,11 +290,9 @@ export async function fetchFiveMinuteMarket(
       volume != null ? 'polymarket' : bookDepth != null ? 'clob-book' : 'none'
 
     return {
-      windowStart,
-      windowEnd,
-      slug,
-      title: event.title ?? 'Bitcoin Up or Down (5m)',
-      question: market.question ?? event.title ?? 'Bitcoin Up or Down',
+      ...base,
+      title: event.title ?? `Bitcoin Up or Down (${label})`,
+      question: market.question ?? event.title ?? `Bitcoin Up or Down (${label})`,
       upPrice,
       downPrice,
       closed,
@@ -252,21 +310,7 @@ export async function fetchFiveMinuteMarket(
       liveOdds: true,
     }
   } catch {
-    const sim = simulatedOdds(spotPrice, openPrice)
-    const proxyVol =
-      spotPrice != null && openPrice != null
-        ? Math.abs(spotPrice - openPrice) * 10
-        : null
-    return {
-      ...base,
-      ...sim,
-      volume: proxyVol,
-      volumeSource: proxyVol != null ? 'proxy' : 'none',
-      source: 'simulated',
-      liveOdds: false,
-      title: 'Practice · simulated Polymarket-style 5m',
-      question: 'Will BTC finish this 5-minute window Up or Down vs open?',
-    }
+    return simulatedSnapshot(durationMinutes, spotPrice, openPrice, nowMs)
   }
 }
 

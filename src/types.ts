@@ -60,11 +60,17 @@ export type IndicatorToggles = {
 export type FiveMinuteSide = 'Up' | 'Down'
 export type FiveMinuteSource = 'polymarket' | 'simulated'
 
+/** Prediction window length in minutes (Polymarket short-duration Up/Down). */
+export type PredictionWindowMinutes = 5 | 30
+
 export type FiveMinuteVolumeSource = 'polymarket' | 'clob-book' | 'proxy' | 'none'
 
 export type FiveMinuteMarketSnapshot = {
   windowStart: number
   windowEnd: number
+  /** Window length in seconds (300 or 1800). */
+  windowSeconds: number
+  durationMinutes: PredictionWindowMinutes
   slug: string
   title: string
   question: string
@@ -91,6 +97,9 @@ export type FiveMinuteMarketSnapshot = {
 export type FiveMinuteBet = {
   id: string
   windowStart: number
+  /** Seconds until window end from start; defaults to 300 for older books. */
+  windowSeconds: number
+  durationMinutes: PredictionWindowMinutes
   side: FiveMinuteSide
   shares: number
   price: number

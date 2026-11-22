@@ -3,6 +3,7 @@ import {
   fetchFiveMinuteMarket,
   floorWindowStart,
   resolveFromSpot,
+  windowSecondsFor,
   windowSlug,
 } from '../api/fiveMinute'
 import {
@@ -19,9 +20,13 @@ import type {
   FiveMinuteBook,
   FiveMinuteMarketSnapshot,
   FiveMinuteSide,
+  PredictionWindowMinutes,
 } from '../types'
 
-export function useFiveMinuteMarket(spotPrice: number | null) {
+export function useFiveMinuteMarket(
+  spotPrice: number | null,
+  durationMinutes: PredictionWindowMinutes = 5,
+) {
   const [book, setBook] = useState<FiveMinuteBook>(() => loadFiveMinuteBook())
   const [market, setMarket] = useState<FiveMinuteMarketSnapshot | null>(null)
   const [now, setNow] = useState(() => Date.now())
@@ -31,6 +36,8 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
   spotRef.current = spotPrice
   const bookRef = useRef(book)
   bookRef.current = book
+  const durationRef = useRef(durationMinutes)
+  durationRef.current = durationMinutes
   const settlingRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -46,24 +53,26 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
   // Capture Coinbase open price once per window for settlement fallback.
   useEffect(() => {
     if (spotPrice == null) return
-    const start = floorWindowStart()
+    const start = floorWindowStart(durationMinutes)
     setBook((b) => rememberOpenPrice(b, start, spotPrice))
-  }, [spotPrice, market?.windowStart])
+  }, [spotPrice, market?.windowStart, durationMinutes])
 
   const refresh = useCallback(async () => {
-    const start = floorWindowStart()
+    const mins = durationRef.current
+    const start = floorWindowStart(mins)
     const open =
       bookRef.current.openPrices[String(start)] ?? spotRef.current ?? null
     try {
-      const snap = await fetchFiveMinuteMarket(spotRef.current, open)
+      const snap = await fetchFiveMinuteMarket(spotRef.current, open, mins)
       setMarket(snap)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '5m market fetch failed')
+      setError(err instanceof Error ? err.message : 'Up/Down market fetch failed')
     }
   }, [])
 
   useEffect(() => {
+    setMarket(null)
     void refresh()
     const poll = window.setInterval(() => void refresh(), 5_000)
     const tick = window.setInterval(() => setNow(Date.now()), 250)
@@ -71,17 +80,27 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
       window.clearInterval(poll)
       window.clearInterval(tick)
     }
-  }, [refresh])
+  }, [refresh, durationMinutes])
 
-  // Settle when the window rolls or Polymarket resolves.
+  // Settle when any open bet's window ends (works across 5m and 30m).
   useEffect(() => {
-    const currentStart = floorWindowStart(now)
+    const nowSec = Math.floor(now / 1000)
     const openBets = book.openBets
     if (openBets.length === 0 && !market) return
 
-    const windowsToSettle = new Set<number>()
+    const windowsToSettle = new Map<
+      number,
+      { windowSeconds: number; durationMinutes: PredictionWindowMinutes }
+    >()
+
     for (const bet of openBets) {
-      if (bet.windowStart < currentStart) windowsToSettle.add(bet.windowStart)
+      const secs = bet.windowSeconds ?? 300
+      if (bet.windowStart + secs <= nowSec) {
+        windowsToSettle.set(bet.windowStart, {
+          windowSeconds: secs,
+          durationMinutes: bet.durationMinutes ?? (secs >= 1800 ? 30 : 5),
+        })
+      }
     }
     if (
       market &&
@@ -89,10 +108,13 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
       market.resolvedOutcome &&
       openBets.some((b) => b.windowStart === market.windowStart)
     ) {
-      windowsToSettle.add(market.windowStart)
+      windowsToSettle.set(market.windowStart, {
+        windowSeconds: market.windowSeconds,
+        durationMinutes: market.durationMinutes,
+      })
     }
 
-    for (const ws of windowsToSettle) {
+    for (const [ws, meta] of windowsToSettle) {
       if (settlingRef.current === ws) continue
       settlingRef.current = ws
       const openPx = book.openPrices[String(ws)] ?? null
@@ -102,8 +124,7 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
           : spotRef.current
       const pmOutcome =
         market?.windowStart === ws ? market.resolvedOutcome : null
-      const outcome =
-        pmOutcome ?? resolveFromSpot(openPx, closePx ?? null)
+      const outcome = pmOutcome ?? resolveFromSpot(openPx, closePx ?? null)
       if (!outcome) {
         settlingRef.current = null
         continue
@@ -112,37 +133,41 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
         market?.windowStart === ws && market.source === 'polymarket' && pmOutcome
           ? 'polymarket'
           : 'simulated'
+      const windowEnd = ws + meta.windowSeconds
       setBook((b) =>
         settleWindow(
           b,
           ws,
-          ws + 300,
-          windowSlug(ws),
+          windowEnd,
+          windowSlug(ws, meta.durationMinutes),
           outcome,
           source,
           openPx,
           closePx ?? null,
         ),
       )
-      setFlash(`5m window settled · ${outcome}`)
+      setFlash(`${meta.durationMinutes}m window settled · ${outcome}`)
       settlingRef.current = null
     }
   }, [now, book.openBets, book.openPrices, market])
 
-  // Refresh market as soon as the window boundary flips.
+  // Refresh market as soon as the window boundary flips for the active duration.
   useEffect(() => {
-    const start = floorWindowStart(now)
+    const start = floorWindowStart(durationMinutes, now)
     if (market && market.windowStart !== start) {
       void refresh()
     }
-  }, [now, market, refresh])
+  }, [now, market, refresh, durationMinutes])
 
   const secondsLeft = useMemo(() => {
-    const end = market?.windowEnd ?? floorWindowStart(now) + 300
+    const end =
+      market?.windowEnd ??
+      floorWindowStart(durationMinutes, now) + windowSecondsFor(durationMinutes)
     return Math.max(0, end - Math.floor(now / 1000))
-  }, [market, now])
+  }, [market, now, durationMinutes])
 
-  const windowStart = market?.windowStart ?? floorWindowStart(now)
+  const windowStart =
+    market?.windowStart ?? floorWindowStart(durationMinutes, now)
 
   const mark = useMemo(() => {
     if (!market) {
@@ -154,7 +179,7 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
   const buy = useCallback(
     (side: FiveMinuteSide, usdAmount: number) => {
       if (!market || market.closed || !market.acceptingOrders) {
-        setError('This 5-minute window is closed.')
+        setError(`This ${market?.durationMinutes ?? durationMinutes}m window is closed.`)
         return false
       }
       const price = side === 'Up' ? market.upPrice : market.downPrice
@@ -165,6 +190,8 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
         price,
         market.windowStart,
         market.source,
+        market.durationMinutes,
+        market.windowSeconds,
       )
       if (!result.ok) {
         setError(result.error)
@@ -177,7 +204,7 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
       )
       return true
     },
-    [book, market],
+    [book, market, durationMinutes],
   )
 
   const sell = useCallback(
@@ -216,7 +243,7 @@ export function useFiveMinuteMarket(spotPrice: number | null) {
 
   const reset = useCallback(() => {
     setBook(resetFiveMinuteBook())
-    setFlash('5m practice bankroll reset to $10,000')
+    setFlash('Up/Down practice bankroll reset to $10,000')
     setError(null)
   }, [])
 

@@ -8,6 +8,7 @@ import {
   LineSeries,
   type IChartApi,
   type ISeriesApi,
+  type LogicalRange,
   type SeriesMarker,
   type Time,
 } from 'lightweight-charts'
@@ -20,6 +21,41 @@ type Props = {
   toggles: IndicatorToggles
   chartType: 'candle' | 'line'
   theme?: ThemeMode
+  /** Bump to force re-running detectSupportResistance and redrawing S/R lines. */
+  levelsRevision?: number
+}
+
+const ZOOM_IN = 0.8
+const ZOOM_OUT = 1.25
+
+function zoomLogicalRange(
+  chart: IChartApi,
+  factor: number,
+  barCount: number,
+) {
+  const ts = chart.timeScale()
+  const range = ts.getVisibleLogicalRange()
+  if (!range) return
+
+  const mid = (range.from + range.to) / 2
+  const span = Math.max((range.to - range.from) * factor, 2)
+  let from = mid - span / 2
+  let to = mid + span / 2
+
+  // Keep a little padding past the data so pan still feels open when zoomed.
+  const min = -2
+  const max = Math.max(barCount + 1, to)
+  if (from < min) {
+    to += min - from
+    from = min
+  }
+  if (to > max) {
+    from -= to - max
+    to = max
+    from = Math.max(min, from)
+  }
+
+  ts.setVisibleLogicalRange({ from, to })
 }
 
 export function TradingChart({
@@ -27,9 +63,11 @@ export function TradingChart({
   toggles,
   chartType,
   theme = 'desk',
+  levelsRevision = 0,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
+  const savedRangeRef = useRef<LogicalRange | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -66,12 +104,36 @@ export function TradingChart({
       },
       rightPriceScale: {
         borderColor,
-        scaleMargins: { top: 0.08, bottom: toggles.volume || toggles.rsi ? 0.28 : 0.08 },
+        scaleMargins: {
+          top: 0.08,
+          bottom: toggles.volume || toggles.rsi ? 0.28 : 0.08,
+        },
       },
       timeScale: {
         borderColor,
         timeVisible: true,
         secondsVisible: false,
+        rightOffset: 6,
+        minBarSpacing: 0.5,
+        // Keep room to pan after wheel/pinch zoom.
+        lockVisibleTimeRangeOnResize: true,
+      },
+      // Wheel/trackpad → zoom; drag / touch → pan while zoomed.
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: { time: true, price: true },
+        axisDoubleClickReset: { time: true, price: true },
+      },
+      handleScroll: {
+        mouseWheel: false,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      kineticScroll: {
+        touch: true,
+        mouse: false,
       },
       autoSize: true,
     })
@@ -170,13 +232,13 @@ export function TradingChart({
         })
       }
 
-      // Markers at nearest swing candles for the top levels
       const markers: SeriesMarker<Time>[] = []
       for (const level of levels.slice(0, 3)) {
         let bestIdx = 0
         let bestDist = Infinity
         for (let i = 0; i < candles.length; i++) {
-          const ref = level.kind === 'support' ? candles[i]!.low : candles[i]!.high
+          const ref =
+            level.kind === 'support' ? candles[i]!.low : candles[i]!.high
           const dist = Math.abs(ref - level.price)
           if (dist < bestDist) {
             bestDist = dist
@@ -195,13 +257,71 @@ export function TradingChart({
       createSeriesMarkers(primary, markers)
     }
 
-    chart.timeScale().fitContent()
+    const saved = savedRangeRef.current
+    if (saved) {
+      chart.timeScale().setVisibleLogicalRange(saved)
+    } else {
+      chart.timeScale().fitContent()
+    }
+
+    const onRange = (range: LogicalRange | null) => {
+      if (range) savedRangeRef.current = range
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onRange)
+
+    // Keep page from scrolling while trackpad/wheel zooms the chart.
+    const el = containerRef.current
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
 
     return () => {
+      el.removeEventListener('wheel', onWheel)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRange)
       chart.remove()
       chartRef.current = null
     }
-  }, [candles, toggles, chartType, theme])
+  }, [candles, toggles, chartType, theme, levelsRevision])
 
-  return <div className="chart-canvas" ref={containerRef} role="img" aria-label="BTC price chart" />
+  const zoomIn = () => {
+    const chart = chartRef.current
+    if (!chart) return
+    zoomLogicalRange(chart, ZOOM_IN, candles.length)
+  }
+
+  const zoomOut = () => {
+    const chart = chartRef.current
+    if (!chart) return
+    zoomLogicalRange(chart, ZOOM_OUT, candles.length)
+  }
+
+  const resetZoom = () => {
+    const chart = chartRef.current
+    if (!chart) return
+    savedRangeRef.current = null
+    chart.timeScale().fitContent()
+  }
+
+  return (
+    <div className="chart-stage">
+      <div className="chart-zoom-controls" role="toolbar" aria-label="Chart zoom">
+        <button type="button" title="Zoom in" onClick={zoomIn}>
+          +
+        </button>
+        <button type="button" title="Zoom out" onClick={zoomOut}>
+          −
+        </button>
+        <button type="button" title="Reset zoom" onClick={resetZoom}>
+          Reset
+        </button>
+      </div>
+      <div
+        className="chart-canvas"
+        ref={containerRef}
+        role="img"
+        aria-label="BTC price chart. Scroll or pinch to zoom, drag to pan."
+      />
+    </div>
+  )
 }

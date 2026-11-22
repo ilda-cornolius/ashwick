@@ -185,31 +185,66 @@ h3,
   animation: rise 0.85s 0.08s ease both;
 }
 
-.chart-dominant {
-  width: 100%;
-  min-height: min(58vh, 560px);
-}
-
-.chart-dominant .chart-canvas,
-.chart-dominant .chart-placeholder {
-  min-height: min(46vh, 460px);
-}
-
-.action-stage {
+/* Chart + Up/Down dock share one column; spot ticket sits beside. */
+.chart-trade-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.75fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.7fr);
   gap: 16px;
   align-items: start;
 }
 
-.hero-five {
+.chart-dominant {
+  width: 100%;
+  min-height: 0;
   display: flex;
-  min-width: 0;
+  flex-direction: column;
+  gap: 0;
 }
 
-.hero-five .five-min-panel {
-  width: 100%;
-  height: 100%;
+.chart-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chart-square {
+  flex: 1;
+  min-height: min(34vh, 340px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-dominant .chart-stage,
+.chart-dominant .chart-canvas,
+.chart-dominant .chart-placeholder {
+  min-height: min(34vh, 340px);
+  flex: 1;
+}
+
+/* Up/Down buy/sell sit directly under the chart square in the same panel. */
+.chart-updown-dock {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.chart-updown-dock .five-min-panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  backdrop-filter: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.refresh-levels-btn {
+  white-space: nowrap;
+}
+
+.duration-toggle button {
+  min-width: 3.5rem;
 }
 
 .dot {
@@ -325,6 +360,92 @@ h3,
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.odds-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.odds-buy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(5.5rem, 0.9fr);
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.odds-sell-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 5.25rem;
+  align-items: stretch;
+}
+
+.odds-sell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 4.75rem;
+  padding: 10px 12px;
+  align-self: stretch;
+}
+
+.odds-sell .muted {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
+.odds-position {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(232, 184, 74, 0.06);
+}
+
+.odds-position .label {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.odds-position strong {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.odds-position-under {
+  padding: 8px 10px;
+  text-align: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.odds-position-under strong {
+  font-size: 0.85rem;
+}
+
+.chart-updown-dock .five-min-odds {
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .odds-buy-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .odds-card {
@@ -521,6 +642,50 @@ h3,
 
 .chart-head h2 {
   font-size: 1.05rem;
+}
+
+.chart-stage {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.chart-zoom-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.chart-zoom-controls button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chart-zoom-controls button:hover {
+  border-color: rgba(126, 184, 255, 0.4);
+  background: rgba(126, 184, 255, 0.12);
 }
 
 .chart-canvas {
@@ -1112,7 +1277,7 @@ h3,
 
 /* —— Responsive —— */
 @media (max-width: 1100px) {
-  .action-stage {
+  .chart-trade-row {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -1133,7 +1298,7 @@ h3,
     flex-wrap: wrap;
   }
 
-  .action-stage {
+  .chart-trade-row {
     grid-template-columns: 1fr;
   }
 
@@ -1145,6 +1310,10 @@ h3,
   .five-min-odds,
   .stake-row {
     grid-template-columns: 1fr;
+  }
+
+  .odds-side {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .stake-presets {
@@ -1160,8 +1329,11 @@ h3,
     min-height: 0;
   }
 
+  .chart-square,
+  .chart-dominant .chart-stage,
   .chart-dominant .chart-canvas,
   .chart-dominant .chart-placeholder,
+  .chart-stage,
   .chart-canvas,
   .chart-placeholder {
     min-height: 280px;
@@ -1597,15 +1769,13 @@ body[data-theme='macos'] {
   mask-image: none;
 }
 
-/* Sidebar vibrancy (left 5m column) */
-.theme-macos .hero-five .panel {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 0.5px 0 rgba(255, 255, 255, 0.8) inset,
-    0 10px 40px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(50px) saturate(190%);
-  -webkit-backdrop-filter: blur(50px) saturate(190%);
+/* Up/Down dock under chart stays transparent inside the glass chart panel */
+.theme-macos .chart-updown-dock .five-min-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .theme-macos .panel {

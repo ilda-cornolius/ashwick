@@ -13,7 +13,11 @@ import { useFiveMinuteMarket } from './hooks/useFiveMinuteMarket'
 import { useMarketData } from './hooks/useMarketData'
 import { usePortfolio } from './hooks/usePortfolio'
 import { formatUsd } from './lib/format'
-import type { ChartInterval, IndicatorToggles } from './types'
+import type {
+  ChartInterval,
+  IndicatorToggles,
+  PredictionWindowMinutes,
+} from './types'
 import './App.css'
 
 export default function App() {
@@ -24,11 +28,15 @@ export default function App() {
     volume: true,
     supportResistance: true,
   })
+  const [predictionWindow, setPredictionWindow] =
+    useState<PredictionWindowMinutes>(5)
+  const [levelsRevision, setLevelsRevision] = useState(0)
 
   const appearance = useAppearance()
   const market = useMarketData(interval)
-  const { portfolio, placeOrder, reset, flash, error, clearError } = usePortfolio()
-  const fiveMin = useFiveMinuteMarket(market.spotPrice)
+  const { portfolio, placeOrder, reset, flash, error, clearError } =
+    usePortfolio()
+  const fiveMin = useFiveMinuteMarket(market.spotPrice, predictionWindow)
 
   const change24h =
     market.candles.length >= 25
@@ -37,6 +45,11 @@ export default function App() {
           market.candles[market.candles.length - 25]!.close) *
         100
       : null
+
+  const refreshSupportLevels = () => {
+    setToggles((t) => ({ ...t, supportResistance: true }))
+    setLevelsRevision((n) => n + 1)
+  }
 
   return (
     <div
@@ -94,68 +107,82 @@ export default function App() {
             onClearCustom={appearance.clearCustomWallpaper}
             error={appearance.error}
           />
-          <a className="pill pill-five" href="#five-min-updown">
-            5m Up/Down
+          <a className="pill pill-five" href="#updown-dock">
+            {predictionWindow}m Up/Down
           </a>
           <span className="pill pill-sim">Simulation · no real money</span>
         </div>
       </header>
 
       <main className="desk-main">
-        <section className="hero-chart panel chart-panel chart-dominant">
-          <div className="panel-head chart-head">
-            <div>
-              <h2>BTC / USD</h2>
-              <p className="muted">Primary price feed · Coinbase public API</p>
+        <div className="chart-trade-row">
+          <section className="hero-chart panel chart-panel chart-dominant">
+            <div className="panel-head chart-head">
+              <div>
+                <h2>BTC / USD</h2>
+                <p className="muted">
+                  Primary price feed · Coinbase public API
+                </p>
+              </div>
+              <div className="chart-head-actions">
+                {market.status === 'loading' && (
+                  <span className="pill">Loading…</span>
+                )}
+                {market.error && (
+                  <span className="pill pill-warn">{market.error}</span>
+                )}
+              </div>
             </div>
-            {market.status === 'loading' && <span className="pill">Loading…</span>}
-            {market.error && <span className="pill pill-warn">{market.error}</span>}
-          </div>
 
-          <IndicatorBar
-            candles={market.candles}
-            toggles={toggles}
-            onToggle={(key) =>
-              setToggles((t) => ({ ...t, [key]: !t[key] }))
-            }
-            chartType={chartType}
-            onChartType={setChartType}
-            interval={interval}
-            onInterval={setInterval}
-          />
-
-          {market.candles.length > 0 ? (
-            <TradingChart
+            <IndicatorBar
               candles={market.candles}
               toggles={toggles}
+              onToggle={(key) =>
+                setToggles((t) => ({ ...t, [key]: !t[key] }))
+              }
               chartType={chartType}
-              theme={appearance.prefs.mode}
+              onChartType={setChartType}
+              interval={interval}
+              onInterval={setInterval}
+              onRefreshLevels={refreshSupportLevels}
             />
-          ) : (
-            <div className="chart-placeholder">
-              {market.status === 'error'
-                ? 'Could not load candles.'
-                : 'Fetching candle history…'}
-            </div>
-          )}
-        </section>
 
-        <section className="action-stage" aria-label="Trading actions">
-          <aside className="hero-five" id="five-min-updown">
-            <FiveMinuteMarket
-              market={fiveMin.market}
-              book={fiveMin.book}
-              secondsLeft={fiveMin.secondsLeft}
-              mark={fiveMin.mark}
-              onBuy={fiveMin.buy}
-              onSell={fiveMin.sell}
-              onReset={fiveMin.reset}
-              flash={fiveMin.flash}
-              error={fiveMin.error}
-              onClearError={fiveMin.clearError}
-              compact
-            />
-          </aside>
+            <div className="chart-square">
+              {market.candles.length > 0 ? (
+                <TradingChart
+                  candles={market.candles}
+                  toggles={toggles}
+                  chartType={chartType}
+                  theme={appearance.prefs.mode}
+                  levelsRevision={levelsRevision}
+                />
+              ) : (
+                <div className="chart-placeholder">
+                  {market.status === 'error'
+                    ? 'Could not load candles.'
+                    : 'Fetching candle history…'}
+                </div>
+              )}
+            </div>
+
+            <div className="chart-updown-dock" id="updown-dock">
+              <FiveMinuteMarket
+                market={fiveMin.market}
+                book={fiveMin.book}
+                secondsLeft={fiveMin.secondsLeft}
+                mark={fiveMin.mark}
+                durationMinutes={predictionWindow}
+                onDuration={setPredictionWindow}
+                onBuy={fiveMin.buy}
+                onSell={fiveMin.sell}
+                onReset={fiveMin.reset}
+                flash={fiveMin.flash}
+                error={fiveMin.error}
+                onClearError={fiveMin.clearError}
+                compact
+              />
+            </div>
+          </section>
 
           <aside className="hero-ticket">
             <OrderTicket
@@ -179,7 +206,7 @@ export default function App() {
               </div>
             )}
           </aside>
-        </section>
+        </div>
       </main>
 
       <section className="desk-grid">
@@ -203,8 +230,8 @@ export default function App() {
       <footer className="site-foot">
         <p>
           ASHWICK is a simulation. Spot candles &amp; ticker:{' '}
-          <code>api.exchange.coinbase.com</code>. Prediction markets &amp; 5m
-          Up/Down:{' '}
+          <code>api.exchange.coinbase.com</code>. Prediction markets &amp;
+          Up/Down (5m live / 30m when available, else simulated):{' '}
           <code>gamma-api.polymarket.com</code> +{' '}
           <code>clob.polymarket.com</code>. Portfolios persist in localStorage.
         </p>
